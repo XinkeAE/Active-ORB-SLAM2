@@ -70,6 +70,8 @@ int main(int argc, char **argv)
 
     // Save camera trajectory
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    SLAM.SaveTrajectoryTUM("Trajectory.txt");
+    SLAM.SaveMap("Map.txt");
 
     ros::shutdown();
 

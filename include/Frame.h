@@ -131,6 +131,9 @@ public:
     // Number of KeyPoints.
     int N;
 
+    // Tracking bad points.
+    int nBadPoseOpt;
+
     // Vector of keypoints (original for visualization) and undistorted (actually used by the system).
     // In the stereo case, mvKeysUn is redundant as images must be rectified.
     // In the RGB-D case, RGB images can be distorted.
@@ -149,10 +152,10 @@ public:
     // ORB descriptor, each row associated to a keypoint.
     cv::Mat mDescriptors, mDescriptorsRight;
 
-    // MapPoints associated to keypoints, NULL pointer if no association.
+    // MapPoints associated to keypoints, NULL pointer if no association. [toExtract]
     std::vector<MapPoint*> mvpMapPoints;
 
-    // Flag to identify outlier associations.
+    // Flag to identify outlier associations. [toExtract]
     std::vector<bool> mvbOutlier;
 
     // Keypoints are assigned to cells in a grid to reduce matching complexity when projecting MapPoints.

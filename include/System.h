@@ -105,6 +105,7 @@ public:
     // Call first Shutdown()
     // See format details at: http://vision.in.tum.de/data/datasets/rgbd-dataset
     void SaveKeyFrameTrajectoryTUM(const string &filename);
+    void SaveKeyFrameTrajectoryTUM_fe(const string &filename);
 
     // Save camera trajectory in the KITTI dataset format.
     // Only for stereo and RGB-D. This method does not work for monocular.
@@ -113,7 +114,7 @@ public:
     void SaveTrajectoryKITTI(const string &filename);
 
     // TODO: Save/Load functions
-    // SaveMap(const string &filename);
+    void SaveMap(const string &filename);
     // LoadMap(const string &filename);
 
     // Information from most recent processed frame

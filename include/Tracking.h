@@ -109,6 +109,13 @@ public:
     list<KeyFrame*> mlpReferences;
     list<double> mlFrameTimes;
     list<bool> mlbLost;
+    list<int> mlModelMatchesInliers; //Xinke
+    list<int> mlKfMatchesInliers; //Xinke
+	list<int> mlMatchesInliers; // Xinke
+    list<int> mlMatchesOutliers; // Xinke
+    list<int> mlMapPoints; // Xinke
+    list<int> mlTotalObservations; //Xinke
+    list<bool> mlbKeyFrame;
 
     // True if local mapping is deactivated and we are performing only localization
     bool mbOnlyTracking;

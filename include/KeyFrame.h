@@ -54,6 +54,19 @@ public:
     cv::Mat GetRotation();
     cv::Mat GetTranslation();
 
+    void SetFirstEstPose(const cv::Mat &Tcw);
+    cv::Mat GetFirstEstRotation();
+    cv::Mat GetFirstEstTranslation();
+    cv::Mat GetFirstEstCameraCenter();
+    cv::Mat Tcw_fe;
+
+    void SetFirstEstPose_parent(const cv::Mat &Tcw);
+    cv::Mat GetFirstEstRotation_parent();
+    cv::Mat GetFirstEstTranslation_parent();
+    cv::Mat GetFirstEstCameraCenter_parent();
+    cv::Mat Tcw_fe_parent;
+    double mTimeStamp_parent;
+
     // Bag of Words Representation
     void ComputeBoW();
 

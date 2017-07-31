@@ -29,3 +29,12 @@ mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j
+
+cd ..
+
+if [ ! ./Vocabulary/ORBvoc.bin ]; then
+   echo "Converting vocabulary to binary"
+   ./tools/bin_vocabulary    
+fi
+
+

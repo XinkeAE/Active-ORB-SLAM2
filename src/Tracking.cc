@@ -273,6 +273,8 @@ void Tracking::Track()
 
     mLastProcessedState=mState;
 
+    bool isKeyframe = false;
+
     // Get Map Mutex -> Map cannot be changed
     unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
 
@@ -455,7 +457,11 @@ void Tracking::Track()
 
             // Check if we need to insert a new keyframe
             if(NeedNewKeyFrame())
+            {
+                isKeyframe = true;
                 CreateNewKeyFrame();
+            }
+                
 
             // We allow points with high innovation (considererd outliers by the Huber Function)
             // pass to the new keyframe, so that bundle adjustment will finally decide
@@ -493,6 +499,7 @@ void Tracking::Track()
         mlpReferences.push_back(mpReferenceKF);
         mlFrameTimes.push_back(mCurrentFrame.mTimeStamp);
         mlbLost.push_back(mState==LOST);
+        mlbKeyFrame.push_back(isKeyframe);
     }
     else
     {
@@ -501,6 +508,7 @@ void Tracking::Track()
         mlpReferences.push_back(mlpReferences.back());
         mlFrameTimes.push_back(mlFrameTimes.back());
         mlbLost.push_back(mState==LOST);
+        mlbKeyFrame.push_back(isKeyframe);
     }
 
 }
@@ -795,6 +803,7 @@ bool Tracking::TrackReferenceKeyFrame()
         }
     }
 
+    mlKfMatchesInliers.push_back(nmatchesMap);
     return nmatchesMap>=10;
 }
 
@@ -918,13 +927,15 @@ bool Tracking::TrackWithMotionModel()
         }
     }    
 
+    mlModelMatchesInliers.push_back(nmatchesMap);
+
     if(mbOnlyTracking)
     {
         mbVO = nmatchesMap<10;
         return nmatches>20;
     }
 
-    return nmatchesMap>=10;
+    return nmatchesMap>=10; // original is 10
 }
 
 bool Tracking::TrackLocalMap()
@@ -940,11 +951,14 @@ bool Tracking::TrackLocalMap()
     Optimizer::PoseOptimization(&mCurrentFrame);
     mnMatchesInliers = 0;
 
+    int nObsvMappoints = 0;
+    int totalObservation = 0;
     // Update MapPoints Statistics
     for(int i=0; i<mCurrentFrame.N; i++)
     {
         if(mCurrentFrame.mvpMapPoints[i])
         {
+            nObsvMappoints++;
             if(!mCurrentFrame.mvbOutlier[i])
             {
                 mCurrentFrame.mvpMapPoints[i]->IncreaseFound();
@@ -952,6 +966,8 @@ bool Tracking::TrackLocalMap()
                 {
                     if(mCurrentFrame.mvpMapPoints[i]->Observations()>0)
                         mnMatchesInliers++;
+
+                    totalObservation += mCurrentFrame.mvpMapPoints[i]->Observations();
                 }
                 else
                     mnMatchesInliers++;
@@ -961,13 +977,17 @@ bool Tracking::TrackLocalMap()
 
         }
     }
+	mlMatchesInliers.push_back(mnMatchesInliers); //xinke
+    mlMatchesOutliers.push_back(mCurrentFrame.nBadPoseOpt); //xinke
+	mlMapPoints.push_back(nObsvMappoints); //xinke
+    mlTotalObservations.push_back(totalObservation); //xinke
 
     // Decide if the tracking was succesful
     // More restrictive if there was a relocalization recently
     if(mCurrentFrame.mnId<mnLastRelocFrameId+mMaxFrames && mnMatchesInliers<50)
         return false;
 
-    if(mnMatchesInliers<30)
+    if(mnMatchesInliers<30) // original 30
         return false;
     else
         return true;
@@ -1023,8 +1043,9 @@ bool Tracking::NeedNewKeyFrame()
         thRefRatio = 0.4f;
 
     if(mSensor==System::MONOCULAR)
-        thRefRatio = 0.9f;
+        thRefRatio = 0.95f;
 
+    //mMaxFrames = 0;
     // Condition 1a: More than "MaxFrames" have passed from last keyframe insertion
     const bool c1a = mCurrentFrame.mnId>=mnLastKeyFrameId+mMaxFrames;
     // Condition 1b: More than "MinFrames" have passed and Local Mapping is idle

@@ -77,8 +77,12 @@ void LocalMapping::Run()
             if(!CheckNewKeyFrames() && !stopRequested())
             {
                 // Local BA
-                if(mpMap->KeyFramesInMap()>2)
+                if(mpMap->KeyFramesInMap()>2){
                     Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&mbAbortBA, mpMap);
+                    mpCurrentKeyFrame->SetFirstEstPose(mpCurrentKeyFrame->GetPose());
+                    mpCurrentKeyFrame->SetFirstEstPose_parent((mpCurrentKeyFrame->GetParent())->GetPose());
+                    mpCurrentKeyFrame->mTimeStamp_parent = (mpCurrentKeyFrame->GetParent())->mTimeStamp;
+                }
 
                 // Check redundant local Keyframes
                 KeyFrameCulling();

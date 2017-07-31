@@ -102,6 +102,8 @@ bool LoopClosing::CheckNewKeyFrames()
 
 bool LoopClosing::DetectLoop()
 {
+	// add this line to disable the loop closure
+	//return false;	
     {
         unique_lock<mutex> lock(mMutexLoopQueue);
         mpCurrentKF = mlpLoopKeyFrameQueue.front();

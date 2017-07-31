@@ -53,6 +53,8 @@ Frame::Frame(const Frame &frame)
         for(int j=0; j<FRAME_GRID_ROWS; j++)
             mGrid[i][j]=frame.mGrid[i][j];
 
+    nBadPoseOpt = 0;
+
     if(!frame.mTcw.empty())
         SetPose(frame.mTcw);
 }
@@ -81,6 +83,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     threadRight.join();
 
     N = mvKeys.size();
+    nBadPoseOpt = 0;
 
     if(mvKeys.empty())
         return;
@@ -136,6 +139,8 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     ExtractORB(0,imGray);
 
     N = mvKeys.size();
+    nBadPoseOpt = 0;
+
 
     if(mvKeys.empty())
         return;
@@ -191,6 +196,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     ExtractORB(0,imGray);
 
     N = mvKeys.size();
+    nBadPoseOpt = 0;
 
     if(mvKeys.empty())
         return;

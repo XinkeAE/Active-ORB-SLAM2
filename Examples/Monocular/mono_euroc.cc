@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat im;
-    for(int ni=0; ni<nImages; ni++)
+    for(int ni=0; ni<nImages; )
     {
         // Read image from file
         im = cv::imread(vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
@@ -107,7 +107,9 @@ int main(int argc, char **argv)
             T = tframe-vTimestamps[ni-1];
 
         if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+            //usleep((T-ttrack)*1e6);
+        
+        ni = ni+1;
     }
 
     // Stop all threads
@@ -125,8 +127,9 @@ int main(int argc, char **argv)
     cout << "mean tracking time: " << totaltime/nImages << endl;
 
     // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
-
+    SLAM.SaveKeyFrameTrajectoryTUM("./euroc_output/KeyFrameTrajectoryEuRoC.txt");
+    SLAM.SaveTrajectoryTUM("./euroc_output/TrajectoryEuRoC.txt");
+    //SLAM.SaveKeyFrameTrajectoryTUM_fe("TrajectoryEuRoC_FirstEstimate.txt");
     return 0;
 }
 

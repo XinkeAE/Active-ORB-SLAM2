@@ -120,6 +120,67 @@ cv::Mat KeyFrame::GetTranslation()
     return Tcw.rowRange(0,3).col(3).clone();
 }
 
+void KeyFrame::SetFirstEstPose(const cv::Mat &Tcw_)
+{
+    unique_lock<mutex> lock(mMutexPose);
+    Tcw_fe = Tcw_.clone();
+}
+
+cv::Mat KeyFrame::GetFirstEstRotation()
+{
+    unique_lock<mutex> lock(mMutexPose);
+    cout << Tcw_fe << endl;
+    return Tcw_fe.rowRange(0,3).colRange(0,3).clone();
+}
+
+cv::Mat KeyFrame::GetFirstEstTranslation()
+{
+    unique_lock<mutex> lock(mMutexPose);
+    return Tcw_fe.rowRange(0,3).col(3).clone();    
+}
+
+cv::Mat KeyFrame::GetFirstEstCameraCenter()
+{
+    unique_lock<mutex> lock(mMutexPose);
+
+    cv::Mat Rcw_fe = Tcw_fe.rowRange(0,3).colRange(0,3);
+    cv::Mat tcw_fe = Tcw_fe.rowRange(0,3).col(3);
+    cv::Mat Rwc_fe = Rcw_fe.t();
+    cv::Mat Ow_fe = -Rwc_fe*tcw_fe;
+
+    return Ow_fe.clone();
+}
+
+void KeyFrame::SetFirstEstPose_parent(const cv::Mat &Tcw_)
+{
+    unique_lock<mutex> lock(mMutexPose);
+    Tcw_fe_parent = Tcw_.clone();
+}
+
+cv::Mat KeyFrame::GetFirstEstRotation_parent()
+{
+    unique_lock<mutex> lock(mMutexPose);
+    return Tcw_fe_parent.rowRange(0,3).colRange(0,3).clone();
+}
+
+cv::Mat KeyFrame::GetFirstEstTranslation_parent()
+{
+    unique_lock<mutex> lock(mMutexPose);
+    return Tcw_fe_parent.rowRange(0,3).col(3).clone();    
+}
+
+cv::Mat KeyFrame::GetFirstEstCameraCenter_parent()
+{
+    unique_lock<mutex> lock(mMutexPose);
+
+    cv::Mat Rcw_fe_parent = Tcw_fe_parent.rowRange(0,3).colRange(0,3);
+    cv::Mat tcw_fe_parent = Tcw_fe_parent.rowRange(0,3).col(3);
+    cv::Mat Rwc_fe_parent = Rcw_fe_parent.t();
+    cv::Mat Ow_fe_parent = -Rwc_fe_parent*tcw_fe_parent;
+
+    return Ow_fe_parent.clone();
+}
+
 void KeyFrame::AddConnection(KeyFrame *pKF, const int &weight)
 {
     {

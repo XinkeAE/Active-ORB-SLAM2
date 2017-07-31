@@ -446,6 +446,7 @@ int Optimizer::PoseOptimization(Frame *pFrame)
     g2o::SE3Quat SE3quat_recov = vSE3_recov->estimate();
     cv::Mat pose = Converter::toCvMat(SE3quat_recov);
     pFrame->SetPose(pose);
+    pFrame->nBadPoseOpt = nBad;
 
     return nInitialCorrespondences-nBad;
 }

@@ -26,6 +26,13 @@
 #include <pangolin/pangolin.h>
 #include <iomanip>
 
+#include <time.h>
+
+bool has_suffix(const std::string &str, const std::string &suffix) {
+  std::size_t index = str.find(suffix, str.size() - suffix.size());
+  return (index != std::string::npos);
+}
+
 namespace ORB_SLAM2
 {
 
@@ -61,15 +68,20 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //Load ORB Vocabulary
     cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
+    clock_t tStart = clock();
     mpVocabulary = new ORBVocabulary();
-    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    bool bVocLoad = false; // chose loading method based on file extension
+    if (has_suffix(strVocFile, ".txt"))
+	  bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+	else
+	  bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
     if(!bVocLoad)
     {
         cerr << "Wrong path to vocabulary. " << endl;
-        cerr << "Falied to open at: " << strVocFile << endl;
+        cerr << "Failed to open at: " << strVocFile << endl;
         exit(-1);
     }
-    cout << "Vocabulary loaded!" << endl << endl;
+    printf("Vocabulary loaded in %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
     //Create KeyFrame Database
     mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
@@ -322,11 +334,11 @@ void System::Shutdown()
 void System::SaveTrajectoryTUM(const string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
-    if(mSensor==MONOCULAR)
+    /*if(mSensor==MONOCULAR)
     {
         cerr << "ERROR: SaveTrajectoryTUM cannot be used for monocular." << endl;
         return;
-    }
+    }*/
 
     vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
@@ -348,8 +360,15 @@ void System::SaveTrajectoryTUM(const string &filename)
     list<ORB_SLAM2::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
     list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
     list<bool>::iterator lbL = mpTracker->mlbLost.begin();
+    list<bool>::iterator lbKf = mpTracker->mlbKeyFrame.begin();
+	list<int>::iterator lnM = mpTracker->mlMatchesInliers.begin(); //xinke 
+    list<int>::iterator lnMBad = mpTracker->mlMatchesOutliers.begin(); //xinke
+    list<int>::iterator lnNMP = mpTracker->mlMapPoints.begin(); //xinke 
+    list<int>::iterator lnM_mdl = mpTracker->mlModelMatchesInliers.begin(); //xinke 
+    list<int>::iterator lnM_kf = mpTracker->mlKfMatchesInliers.begin(); //xinke 
+    list<int>::iterator lnObsv = mpTracker->mlTotalObservations.begin(); //xinke 
     for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(),
-        lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++, lbL++)
+        lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++, lbL++, lnM++, lnNMP++, lbKf++, lnM_mdl++, lnM_kf++, lnObsv++, lnMBad++)
     {
         if(*lbL)
             continue;
@@ -358,14 +377,18 @@ void System::SaveTrajectoryTUM(const string &filename)
 
         cv::Mat Trw = cv::Mat::eye(4,4,CV_32F);
 
+        double kfTimeStamp = pKF->mTimeStamp;
+
         // If the reference keyframe was culled, traverse the spanning tree to get a suitable keyframe.
         while(pKF->isBad())
         {
             Trw = Trw*pKF->mTcp;
             pKF = pKF->GetParent();
+            kfTimeStamp = pKF->mTimeStamp;
         }
 
         Trw = Trw*pKF->GetPose()*Two;
+        cv::Mat Trw_kf = pKF->GetPose()*Two;
 
         cv::Mat Tcw = (*lit)*Trw;
         cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
@@ -373,7 +396,14 @@ void System::SaveTrajectoryTUM(const string &filename)
 
         vector<float> q = Converter::toQuaternion(Rwc);
 
-        f << setprecision(6) << *lT << " " <<  setprecision(9) << twc.at<float>(0) << " " << twc.at<float>(1) << " " << twc.at<float>(2) << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
+        cv::Mat Rwr = Trw_kf.rowRange(0,3).colRange(0,3).t();
+        cv::Mat twr = -Rwr*Trw_kf.rowRange(0,3).col(3);
+
+        vector<float> q_kf = Converter::toQuaternion(Rwr);         
+
+        f << setprecision(6) << *lT << " " <<  setprecision(9) << twc.at<float>(0) << " " << twc.at<float>(1) << " " << twc.at<float>(2) << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << " " 
+          << setprecision(6) << kfTimeStamp << " " << setprecision(9) << twr.at<float>(0) << " " << twr.at<float>(1) << " " << twr.at<float>(2) << " " << q_kf[0] << " " << q_kf[1] << " " << q_kf[2] << " " << q_kf[3]
+                             << " "  <<  *lnM << " " << *lnNMP << " " << *lbKf << " " << *lnM_mdl << " " << *lnM_kf << " " << *lnObsv << " " << *lnMBad << endl;
     }
     f.close();
     cout << endl << "trajectory saved!" << endl;
@@ -399,21 +429,124 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     {
         KeyFrame* pKF = vpKFs[i];
 
+        KeyFrame* pKF_p = vpKFs[i]->GetParent();
+
+        if(pKF_p==NULL)
+            continue;
        // pKF->SetPose(pKF->GetPose()*Two);
 
-        if(pKF->isBad())
+        if(pKF->isBad()||pKF_p->isBad())
             continue;
 
         cv::Mat R = pKF->GetRotation().t();
         vector<float> q = Converter::toQuaternion(R);
         cv::Mat t = pKF->GetCameraCenter();
+
+        cv::Mat R_p = pKF_p->GetRotation().t();
+        vector<float> q_p = Converter::toQuaternion(R_p);
+        cv::Mat t_p = pKF_p->GetCameraCenter();
+
+        int nConnectedKfs = (pKF->GetConnectedKeyFrames()).size();
+        int nMatchedMps = (pKF->GetMapPointMatches()).size();
+        int nMps = (pKF->GetMapPoints()).size();
+
         f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
-          << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
+          << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << " "
+          << setprecision(6) << pKF_p->mTimeStamp << setprecision(7) << " " << t_p.at<float>(0) << " " << t_p.at<float>(1) << " " << t_p.at<float>(2)
+          << " " << q_p[0] << " " << q_p[1] << " " << q_p[2] << " " << q_p[3] << " "          
+          << " " << nConnectedKfs << " " << nMatchedMps << " " << nMps << endl;
 
     }
 
     f.close();
     cout << endl << "trajectory saved!" << endl;
+}
+
+void System::SaveKeyFrameTrajectoryTUM_fe(const string &filename)
+{
+    cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
+
+    vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+
+    // Transform all keyframes so that the first keyframe is at the origin.
+    // After a loop closure the first keyframe might not be at the origin.
+    //cv::Mat Two = vpKFs[0]->GetPoseInverse();
+
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    for(size_t i=0; i<vpKFs.size(); i++)
+    {
+        KeyFrame* pKF = vpKFs[i];
+
+       // pKF->SetPose(pKF->GetPose()*Two);
+
+        if(pKF->isBad())
+            continue;
+
+        cout << "pass0!" << endl;
+        cv::Mat R = pKF->GetFirstEstRotation().t();
+        cout << "pass1!" << endl;
+        vector<float> q = Converter::toQuaternion(R);
+        cout << "pass2!" << endl;
+        cv::Mat t = pKF->GetFirstEstCameraCenter();
+        cout << "pass!" << endl;
+
+        cv::Mat R_p = pKF->GetFirstEstRotation_parent().t();
+        vector<float> q_p = Converter::toQuaternion(R_p);
+        cv::Mat t_p = pKF->GetFirstEstCameraCenter_parent();
+
+        f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
+          << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << " " 
+          << setprecision(6) << pKF->mTimeStamp_parent << setprecision(7) << " " << t_p.at<float>(0) << " " << t_p.at<float>(1) << " " << t_p.at<float>(2)
+          << " " << q_p[0] << " " << q_p[1] << " " << q_p[2] << " " << q_p[3] << " "
+          << endl;
+
+    }
+
+    f.close();
+    cout << endl << "trajectory saved!" << endl;
+}
+
+void System::SaveMap(const string &filename)
+{
+    cout << endl << "Saving map points to " << filename << " ..." << endl;
+
+    vector<MapPoint*> vpPts = mpMap->GetAllMapPoints();
+
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    cout << "totally " << vpPts.size() << " points." << endl;
+    for(size_t i=0; i<vpPts.size(); i++){
+        MapPoint* pPt = vpPts[i];
+
+        //if(pPt->isBad())
+            //continue;
+        
+        cv::Mat Pos = pPt->GetWorldPos();
+        cv::Mat Normal = pPt->GetNormal();
+        int number_observed = pPt->Observations();
+
+        //KeyFrame* pKF = pPt->GetReferenceKeyFrame();
+
+        cv::Mat Pos_f;
+        cv::Mat Normal_f;
+
+        Pos.convertTo(Pos_f,CV_32FC1);
+        Normal.convertTo(Normal_f,CV_32FC1);
+
+        f  << Pos_f.at<float>(0) << " " << Pos_f.at<float>(1) << " " << Pos_f.at<float>(2) << " "
+           << Normal_f.at<float>(0) << " " << Normal_f.at<float>(1) << " " << Normal_f.at<float>(2) << " "
+           << number_observed << endl;   
+ 
+    }
+
+    f.close();
+    cout << endl << "map saved!" << endl;
 }
 
 void System::SaveTrajectoryKITTI(const string &filename)
