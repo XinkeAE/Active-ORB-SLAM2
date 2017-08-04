@@ -28,6 +28,22 @@
 
 #include <time.h>
 
+#include <numeric>
+
+float compute_std(std::vector<float> v)
+{
+    float sum = std::accumulate(v.begin(), v.end(), 0.0);
+    float mean = sum / v.size();
+
+    std::vector<float> diff(v.size());
+    std::transform(v.begin(), v.end(), diff.begin(),
+                std::bind2nd(std::minus<float>(), mean));
+    float sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    float stdev = std::sqrt(sq_sum / v.size());
+
+    return stdev;
+}
+
 bool has_suffix(const std::string &str, const std::string &suffix) {
   std::size_t index = str.find(suffix, str.size() - suffix.size());
   return (index != std::string::npos);
@@ -524,14 +540,25 @@ void System::SaveMap(const string &filename)
     for(size_t i=0; i<vpPts.size(); i++){
         MapPoint* pPt = vpPts[i];
 
-        //if(pPt->isBad())
-            //continue;
+        if(pPt->isBad())
+            continue;
         
         cv::Mat Pos = pPt->GetWorldPos();
         cv::Mat Normal = pPt->GetNormal();
         int number_observed = pPt->Observations();
 
         //KeyFrame* pKF = pPt->GetReferenceKeyFrame();
+
+        std::vector<float> view_cos_vector;
+
+        for(size_t j=0; j<pPt->mNormalVectors.size(); j++)
+        {
+            cv::Mat normali = pPt->mNormalVectors[j];
+            view_cos_vector.push_back(normali.dot(Normal));   
+            //std::cout << j << " view cosine = " <<  normali.dot(Normal) << std::endl;    
+        }
+
+        float stdev = compute_std(view_cos_vector);
 
         cv::Mat Pos_f;
         cv::Mat Normal_f;
@@ -541,7 +568,7 @@ void System::SaveMap(const string &filename)
 
         f  << Pos_f.at<float>(0) << " " << Pos_f.at<float>(1) << " " << Pos_f.at<float>(2) << " "
            << Normal_f.at<float>(0) << " " << Normal_f.at<float>(1) << " " << Normal_f.at<float>(2) << " "
-           << number_observed << endl;   
+           << number_observed << " " << stdev << endl;   
  
     }
 

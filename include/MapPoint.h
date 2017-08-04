@@ -109,6 +109,8 @@ public:
     cv::Mat mPosGBA;
     long unsigned int mnBAGlobalForKF;
 
+    std::vector<cv::Mat> mNormalVectors;
+
 
     static std::mutex mGlobalMutex;
 
