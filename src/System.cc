@@ -29,19 +29,18 @@
 #include <time.h>
 
 #include <numeric>
+#include <math.h>
 
-float compute_std(std::vector<float> v)
+void compute_std(std::vector<float> v, float & mean, float & stdev)
 {
     float sum = std::accumulate(v.begin(), v.end(), 0.0);
-    float mean = sum / v.size();
+    mean = sum / v.size();
 
     std::vector<float> diff(v.size());
     std::transform(v.begin(), v.end(), diff.begin(),
                 std::bind2nd(std::minus<float>(), mean));
     float sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
-    float stdev = std::sqrt(sq_sum / v.size());
-
-    return stdev;
+    stdev = std::sqrt(sq_sum / v.size());
 }
 
 bool has_suffix(const std::string &str, const std::string &suffix) {
@@ -550,15 +549,26 @@ void System::SaveMap(const string &filename)
         //KeyFrame* pKF = pPt->GetReferenceKeyFrame();
 
         std::vector<float> view_cos_vector;
+        float view_mean;
+        float view_std;
+
+        std::vector<float> theta_s;
+        float theta_mean;
+        float theta_std;
 
         for(size_t j=0; j<pPt->mNormalVectors.size(); j++)
         {
             cv::Mat normali = pPt->mNormalVectors[j];
             view_cos_vector.push_back(normali.dot(Normal));   
-            //std::cout << j << " view cosine = " <<  normali.dot(Normal) << std::endl;    
+            //std::cout << j << " view cosine = " <<  normali.dot(Normal) << std::endl; 
+
+            float theta = atan2(normali.at<float>(0,0),normali.at<float>(2,0));
+            theta_s.push_back(theta);
+
         }
 
-        float stdev = compute_std(view_cos_vector);
+        compute_std(view_cos_vector, view_mean, view_std);
+        compute_std(theta_s, theta_mean, theta_std);
 
         cv::Mat Pos_f;
         cv::Mat Normal_f;
@@ -568,7 +578,7 @@ void System::SaveMap(const string &filename)
 
         f  << Pos_f.at<float>(0) << " " << Pos_f.at<float>(1) << " " << Pos_f.at<float>(2) << " "
            << Normal_f.at<float>(0) << " " << Normal_f.at<float>(1) << " " << Normal_f.at<float>(2) << " "
-           << number_observed << " " << stdev << endl;   
+           << number_observed << " " << theta_mean << " " << theta_std << endl;   
  
     }
 
