@@ -34,6 +34,7 @@ namespace ORB_SLAM2
 
 class MapPoint;
 class KeyFrame;
+class ORBextractor;
 
 class Map
 {
@@ -59,12 +60,30 @@ public:
 
     void clear();
 
+    bool Save(const string &filename);
+    bool Load(const string &filename, ORBVocabulary &voc);
+    // This is to load the camera parameter and later used for retrieving the map
+    bool LoadCofficient(const string &strSettingPath);
+
     vector<KeyFrame*> mvpKeyFrameOrigins;
 
     std::mutex mMutexMapUpdate;
 
     // This avoid that two points are created simultaneously in separate threads (id conflict)
     std::mutex mMutexPointCreation;
+
+    // Calibration matrix and OpenCV distortion parameters.
+    cv::Mat mK;
+    static float fx;
+    static float fy;
+    static float cx;
+    static float cy;
+    static float invfx;
+    static float invfy;
+    cv::Mat mDistCoef;
+
+    // Stereo baseline multiplied by fx.
+    float mbf;
 
 protected:
     std::set<MapPoint*> mspMapPoints;
@@ -78,6 +97,12 @@ protected:
     int mnBigChangeIdx;
 
     std::mutex mMutexMap;
+
+	void _WriteMapPoint(ofstream &f, MapPoint* mp);
+	void _WriteKeyFrame(ofstream &f, KeyFrame* kf,  map<MapPoint*, unsigned long int>& idx_of_mp);
+	MapPoint* _ReadMapPoint(ifstream &f);
+	KeyFrame* _ReadKeyFrame(ifstream &f, ORBVocabulary &voc, std::vector<MapPoint*> amp, ORBextractor* ex);
+
 };
 
 } //namespace ORB_SLAM

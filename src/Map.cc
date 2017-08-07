@@ -18,12 +18,17 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Map.h"
-
 #include<mutex>
+#include<climits>
+#include <sys/stat.h>
+#include "Map.h"
+#include "Converter.h"
+#include "ORBextractor.h"
 
 namespace ORB_SLAM2
 {
+
+float Map::cx, Map::cy, Map::fx, Map::fy, Map::invfx, Map::invfy;
 
 Map::Map():mnMaxKFid(0),mnBigChangeIdx(0)
 {
@@ -129,5 +134,327 @@ void Map::clear()
     mvpReferenceMapPoints.clear();
     mvpKeyFrameOrigins.clear();
 }
+
+bool Map::LoadCofficient(const string &strSettingPath){
+
+    cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
+    fx = fSettings["Camera.fx"];
+    fy = fSettings["Camera.fy"];
+    cx = fSettings["Camera.cx"];
+    cy = fSettings["Camera.cy"];
+    invfx = 1.0/fx;
+    invfy = 1.0/fy;
+
+    cv::Mat K = cv::Mat::eye(3,3,CV_32F);
+    K.at<float>(0,0) = fx;
+    K.at<float>(1,1) = fy;
+    K.at<float>(0,2) = cx;
+    K.at<float>(1,2) = cy;
+    K.copyTo(mK);
+
+    cv::Mat DistCoef(4,1,CV_32F);
+    DistCoef.at<float>(0) = fSettings["Camera.k1"];
+    DistCoef.at<float>(1) = fSettings["Camera.k2"];
+    DistCoef.at<float>(2) = fSettings["Camera.p1"];
+    DistCoef.at<float>(3) = fSettings["Camera.p2"];
+    const float k3 = fSettings["Camera.k3"];
+    if(k3!=0)
+    {
+        DistCoef.resize(5);
+        DistCoef.at<float>(4) = k3;
+    }
+    DistCoef.copyTo(mDistCoef);
+
+    mbf = fSettings["Camera.bf"];
+
+    return true;   
+}
+
+//
+// Binary version
+//
+// TODO: frameid vs keyframeid
+//
+KeyFrame* Map::_ReadKeyFrame(ifstream &f, ORBVocabulary &voc, std::vector<MapPoint*> amp, ORBextractor* orb_ext) {
+  Frame fr;
+  fr.mpORBvocabulary = &voc;
+  f.read((char*)&fr.mnId, sizeof(fr.mnId));              // ID
+  //cerr << " reading keyfrane id " << fr.mnId << endl;
+  f.read((char*)&fr.mTimeStamp, sizeof(fr.mTimeStamp));  // timestamp
+  cv::Mat Tcw(4,4,CV_32F);                               // position
+  f.read((char*)&Tcw.at<float>(0, 3), sizeof(float));
+  f.read((char*)&Tcw.at<float>(1, 3), sizeof(float));
+  f.read((char*)&Tcw.at<float>(2, 3), sizeof(float));
+  Tcw.at<float>(3,3) = 1.;
+  cv::Mat Qcw(1,4, CV_32F);                             // orientation
+  f.read((char*)&Qcw.at<float>(0, 0), sizeof(float));
+  f.read((char*)&Qcw.at<float>(0, 1), sizeof(float));
+  f.read((char*)&Qcw.at<float>(0, 2), sizeof(float));
+  f.read((char*)&Qcw.at<float>(0, 3), sizeof(float));
+  Converter::RmatOfQuat(Tcw, Qcw);
+  fr.SetPose(Tcw);
+  f.read((char*)&fr.N, sizeof(fr.N));                    // nb keypoints
+  fr.mvKeys.reserve(fr.N);
+  fr.mDescriptors.create(fr.N, 32, CV_8UC1);
+  fr.mvpMapPoints = vector<MapPoint*>(fr.N,static_cast<MapPoint*>(NULL));
+  
+  for (int i=0; i<fr.N; i++) {
+	cv::KeyPoint kp;
+	f.read((char*)&kp.pt.x,     sizeof(kp.pt.x));
+	f.read((char*)&kp.pt.y,     sizeof(kp.pt.y));
+	f.read((char*)&kp.size,     sizeof(kp.size));
+	f.read((char*)&kp.angle,    sizeof(kp.angle));
+	f.read((char*)&kp.response, sizeof(kp.response));
+	f.read((char*)&kp.octave,   sizeof(kp.octave));
+	fr.mvKeys.push_back(kp);
+	for (int j=0; j<32; j++)
+	  f.read((char*)&fr.mDescriptors.at<unsigned char>(i, j), sizeof(char));
+	unsigned long int mpidx;
+	f.read((char*)&mpidx,   sizeof(mpidx));
+	if (mpidx == ULONG_MAX)	fr.mvpMapPoints[i] = NULL;
+	else fr.mvpMapPoints[i] = amp[mpidx];
+  }
+
+  // load camera parameters
+  fr.fx = fx;
+  fr.fy = fy;
+  fr.cx = cx;
+  fr.cy = cy;
+  fr.invfx = invfx;
+  fr.invfy = invfy;
+  fr.mDistCoef = mDistCoef.clone();
+  fr.mK = mK.clone();
+
+
+  // mono only for now
+  fr.mvuRight = vector<float>(fr.N,-1);
+  fr.mvDepth = vector<float>(fr.N,-1);
+  fr.mpORBextractorLeft = orb_ext;
+  fr.InitializeScaleLevels();
+  fr.UndistortKeyPoints();
+  fr.AssignFeaturesToGrid();
+  fr.ComputeBoW();
+
+  KeyFrame* kf = new KeyFrame(fr, this, NULL);
+  kf->mnId = fr.mnId; // bleeee why? do I store that?
+  for (int i=0; i<fr.N; i++) {
+  	if (fr.mvpMapPoints[i]) {
+  	  fr.mvpMapPoints[i]->AddObservation(kf, i);
+	  if (!fr.mvpMapPoints[i]->GetReferenceKeyFrame()) fr.mvpMapPoints[i]->SetReferenceKeyFrame(kf);
+	}
+  }
+
+
+  return kf;
+}
+
+
+MapPoint* Map::_ReadMapPoint(ifstream &f) {
+  long unsigned int id; 
+  f.read((char*)&id, sizeof(id));              // ID
+  cv::Mat wp(3,1, CV_32F);
+  f.read((char*)&wp.at<float>(0), sizeof(float));
+  f.read((char*)&wp.at<float>(1), sizeof(float));
+  f.read((char*)&wp.at<float>(2), sizeof(float));
+  long int mnFirstKFid=0, mnFirstFrame=0;
+  MapPoint* mp = new MapPoint(wp, mnFirstKFid, mnFirstFrame, this);
+  mp->mnId = id;
+  return mp;
+}
+
+
+
+
+bool Map::Load(const string &filename, ORBVocabulary &voc) {
+  
+  int nFeatures = 2000;
+  float scaleFactor = 1.2;
+  int nLevels = 8, fIniThFAST = 20, fMinThFAST = 7;
+  ORB_SLAM2::ORBextractor orb_ext = ORB_SLAM2::ORBextractor(nFeatures, scaleFactor, nLevels, fIniThFAST, fMinThFAST);
+
+  cerr << "Map: reading from " << filename << endl;
+  ifstream f;
+  f.open(filename.c_str());
+
+  long unsigned int nb_mappoints, max_id=0;
+  f.read((char*)&nb_mappoints, sizeof(nb_mappoints));              
+  cerr << "reading " << nb_mappoints << " mappoints" << endl; 
+  for (unsigned int i=0; i<nb_mappoints; i++) {
+	ORB_SLAM2::MapPoint* mp = _ReadMapPoint(f);
+	if (mp->mnId>=max_id) max_id=mp->mnId;
+	AddMapPoint(mp);
+  }
+  ORB_SLAM2::MapPoint::nNextId = max_id+1; // that is probably wrong if last mappoint is not here :(
+
+  std::vector<MapPoint*> amp = GetAllMapPoints();
+  long unsigned int nb_keyframes;
+  f.read((char*)&nb_keyframes, sizeof(nb_keyframes));
+  cerr << "reading " << nb_keyframes << " keyframe" << endl; 
+  vector<KeyFrame*> kf_by_order;
+  for (unsigned int i=0; i<nb_keyframes; i++) {
+  //std::cout << "pass:" << i << std::endl;
+	KeyFrame* kf = _ReadKeyFrame(f, voc, amp, &orb_ext); 
+	AddKeyFrame(kf);
+	kf_by_order.push_back(kf);
+  }
+
+  // Load Spanning tree
+  map<unsigned long int, KeyFrame*> kf_by_id;
+  for(auto kf: mspKeyFrames) {
+	kf_by_id[kf->mnId] = kf;
+  }
+  for(auto kf: kf_by_order) {
+	unsigned long int parent_id;
+	f.read((char*)&parent_id, sizeof(parent_id));          // parent id
+	if (parent_id != ULONG_MAX)
+	  kf->ChangeParent(kf_by_id[parent_id]);
+	unsigned long int nb_con;                             // number connected keyframe
+	f.read((char*)&nb_con, sizeof(nb_con));  
+	for (unsigned long int i=0; i<nb_con; i++) {
+	  unsigned long int id; int weight;
+	  f.read((char*)&id, sizeof(id));                   // connected keyframe
+	  f.read((char*)&weight, sizeof(weight));           // connection weight
+	  kf->AddConnection(kf_by_id[id], weight);
+	}
+  }
+  // MapPoints descriptors
+  for(auto mp: amp) {
+	mp->ComputeDistinctiveDescriptors();
+	mp->UpdateNormalAndDepth();
+  }
+#if 0
+  for(auto mp: mspMapPoints)
+	if (!(mp->mnId%100))
+	  cerr << "mp " << mp->mnId << " " << mp->Observations() << " " << mp->isBad() << endl;
+#endif
+
+#if 0
+  for(auto kf: kf_by_order) {
+	cerr << "loaded keyframe id " << kf->mnId << " ts " << kf->mTimeStamp << " frameid " << kf->mnFrameId << " TrackReferenceForFrame " << kf->mnTrackReferenceForFrame << endl;
+	cerr << " parent " << kf->GetParent() << endl;
+	cerr << "children: ";
+	for(auto ch: kf->GetChilds())
+	  cerr << " " << ch;
+	cerr <<endl;
+  }
+#endif
+  return true;
+}
+
+
+
+void Map::_WriteMapPoint(ofstream &f, MapPoint* mp) {
+  f.write((char*)&mp->mnId, sizeof(mp->mnId));               // id: long unsigned int
+  cv::Mat wp = mp->GetWorldPos();
+  f.write((char*)&wp.at<float>(0), sizeof(float));           // pos x: float
+  f.write((char*)&wp.at<float>(1), sizeof(float));           // pos y: float
+  f.write((char*)&wp.at<float>(2), sizeof(float));           // pos z: float
+}
+
+
+void Map::_WriteKeyFrame(ofstream &f, KeyFrame* kf, map<MapPoint*, unsigned long int>& idx_of_mp) {
+  f.write((char*)&kf->mnId, sizeof(kf->mnId));                 // id: long unsigned int
+  f.write((char*)&kf->mTimeStamp, sizeof(kf->mTimeStamp));     // ts: double
+
+#if 0
+  cerr << "writting keyframe id " << kf->mnId << " ts " << kf->mTimeStamp << " frameid " << kf->mnFrameId << " TrackReferenceForFrame " << kf->mnTrackReferenceForFrame << endl;
+  cerr << " parent " << kf->GetParent() << endl;
+  cerr << "children: ";
+  for(auto ch: kf->GetChilds())
+	cerr << " " << ch->mnId;
+  cerr <<endl;
+  cerr << kf->mnId << " connected: (" << kf->GetConnectedKeyFrames().size() << ") ";
+  for (auto ckf: kf->GetConnectedKeyFrames())
+	cerr << ckf->mnId << "," << kf->GetWeight(ckf) << " ";
+  cerr << endl;
+#endif
+  
+
+
+  cv::Mat Tcw = kf->GetPose();
+  f.write((char*)&Tcw.at<float>(0,3), sizeof(float));          // px: float
+  f.write((char*)&Tcw.at<float>(1,3), sizeof(float));          // py: float
+  f.write((char*)&Tcw.at<float>(2,3), sizeof(float));          // pz: float
+  vector<float> Qcw = Converter::toQuaternion(Tcw.rowRange(0,3).colRange(0,3));
+  f.write((char*)&Qcw[0], sizeof(float));                      // qx: float
+  f.write((char*)&Qcw[1], sizeof(float));                      // qy: float
+  f.write((char*)&Qcw[2], sizeof(float));                      // qz: float
+  f.write((char*)&Qcw[3], sizeof(float));                      // qw: float
+  f.write((char*)&kf->N, sizeof(kf->N));                       // nb_features: int
+  for (int i=0; i<kf->N; i++) {
+	cv::KeyPoint kp = kf->mvKeys[i];
+	f.write((char*)&kp.pt.x,     sizeof(kp.pt.x));               // float
+	f.write((char*)&kp.pt.y,     sizeof(kp.pt.y));               // float
+	f.write((char*)&kp.size,     sizeof(kp.size));               // float
+	f.write((char*)&kp.angle,    sizeof(kp.angle));              // float
+	f.write((char*)&kp.response, sizeof(kp.response));           // float
+	f.write((char*)&kp.octave,   sizeof(kp.octave));             // int
+	for (int j=0; j<32; j++) 
+	  f.write((char*)&kf->mDescriptors.at<unsigned char>(i,j), sizeof(char));
+
+	unsigned long int mpidx; MapPoint* mp = kf->GetMapPoint(i); 
+	if (mp == NULL) mpidx = ULONG_MAX;
+	else mpidx = idx_of_mp[mp];
+	f.write((char*)&mpidx,   sizeof(mpidx));                       // long int
+  }
+
+}
+
+bool Map::Save(const string &filename) {
+  cerr << "Map: Saving to " << filename << endl;
+  ofstream f;
+  f.open(filename.c_str(), ios_base::out|ios::binary);
+  
+  cerr << "  writing " << mspMapPoints.size() << " mappoints" << endl;
+  unsigned long int nbMapPoints = mspMapPoints.size();
+  f.write((char*)&nbMapPoints, sizeof(nbMapPoints));  
+  for(auto mp: mspMapPoints)
+	_WriteMapPoint(f, mp);
+
+  map<MapPoint*, unsigned long int> idx_of_mp;
+  unsigned long int i = 0;
+  for(auto mp: mspMapPoints) {
+	idx_of_mp[mp] = i;
+	i += 1;
+  }
+  
+  cerr << "  writing " << mspKeyFrames.size() << " keyframes" << endl;
+  unsigned long int nbKeyFrames = mspKeyFrames.size();
+  f.write((char*)&nbKeyFrames, sizeof(nbKeyFrames));  
+  for(auto kf: mspKeyFrames)
+	_WriteKeyFrame(f, kf, idx_of_mp);
+  
+  // store tree and graph
+  for(auto kf: mspKeyFrames) {
+	KeyFrame* parent = kf->GetParent();
+	unsigned long int parent_id = ULONG_MAX; 
+	if (parent) parent_id = parent->mnId;
+	f.write((char*)&parent_id, sizeof(parent_id));
+	unsigned long int nb_con = kf->GetConnectedKeyFrames().size();
+	f.write((char*)&nb_con, sizeof(nb_con));
+	for (auto ckf: kf->GetConnectedKeyFrames()) {
+	  int weight = kf->GetWeight(ckf);
+	  f.write((char*)&ckf->mnId, sizeof(ckf->mnId));
+	  f.write((char*)&weight, sizeof(weight));
+	}
+  }
+
+  f.close();
+  cerr << "Map: finished saving" << endl;
+  struct stat st;
+  stat(filename.c_str(), &st);
+  cerr << "Map: saved " << st.st_size << " bytes" << endl;
+
+#if 0
+  for(auto mp: mspMapPoints)
+	if (!(mp->mnId%100))
+	  cerr << "mp " << mp->mnId << " " << mp->Observations() << " " << mp->isBad() << endl;
+#endif
+
+  return true;
+
+
+}
+
 
 } //namespace ORB_SLAM

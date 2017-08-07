@@ -33,6 +33,28 @@ float Frame::cx, Frame::cy, Frame::fx, Frame::fy, Frame::invfx, Frame::invfy;
 float Frame::mnMinX, Frame::mnMinY, Frame::mnMaxX, Frame::mnMaxY;
 float Frame::mfGridElementWidthInv, Frame::mfGridElementHeightInv;
 
+void Frame::InitializeScaleLevels() {
+  mnScaleLevels = mpORBextractorLeft->GetLevels();
+  mfScaleFactor = mpORBextractorLeft->GetScaleFactor();
+  mfLogScaleFactor = log(mfScaleFactor);
+  mvScaleFactors = mpORBextractorLeft->GetScaleFactors();
+  mvInvScaleFactors = mpORBextractorLeft->GetInverseScaleFactors();
+  mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
+  mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
+}
+  
+void Frame::InitializeClass(const cv::Mat &imLeftOrGray) {
+    if(Frame::mbInitialComputations){
+	  cerr << "in Frame::InitializeClass" << endl;
+	  ComputeImageBounds(imLeftOrGray);
+
+	  // cout << "FRAME_GRID_COLS=" << FRAME_GRID_COLS << " mnMaxX=" << mnMaxX << " mnMinX=" << mnMinX << endl;
+	  Frame::mfGridElementWidthInv=static_cast<float>(FRAME_GRID_COLS)/(Frame::mnMaxX-Frame::mnMinX);
+	  Frame::mfGridElementHeightInv=static_cast<float>(FRAME_GRID_ROWS)/(Frame::mnMaxY-Frame::mnMinY);
+	  Frame::mbInitialComputations=false;
+    }
+}
+
 Frame::Frame()
 {}
 

@@ -187,22 +187,22 @@ public:
     static float mnMaxX;
     static float mnMinY;
     static float mnMaxY;
-
     static bool mbInitialComputations;
-
-
-private:
 
     // Undistort keypoints given OpenCV distortion parameters.
     // Only for the RGB-D case. Stereo must be already rectified!
     // (called in the constructor).
     void UndistortKeyPoints();
+	void InitializeScaleLevels();
+	void InitializeClass(const cv::Mat& imLeftOrGray);
 
     // Computes image bounds for the undistorted image (called in the constructor).
     void ComputeImageBounds(const cv::Mat &imLeft);
 
     // Assign keypoints to the grid for speed up feature matching (called in the constructor).
     void AssignFeaturesToGrid();
+
+private:
 
     // Rotation, translation and camera center
     cv::Mat mRcw;

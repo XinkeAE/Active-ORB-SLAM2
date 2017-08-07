@@ -35,9 +35,9 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
 
 int main(int argc, char **argv)
 {
-    if(argc != 5)
+    if(argc != 5 && argc !=6)
     {
-        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_image_folder path_to_times_file" << endl;
+        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_image_folder path_to_times_file (path_to_map)" << endl;
         return 1;
     }
 
@@ -54,8 +54,14 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    string path_to_map = argc == 6 ? string(argv[5]) : "";
+    bool is_localization_mode = argc == 6;
+
+
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true,NULL,NULL,path_to_map);
+
+    std::cout << "Pass Initialization SLAM!" << std::endl;
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -64,6 +70,11 @@ int main(int argc, char **argv)
     cout << endl << "-------" << endl;
     cout << "Start processing sequence ..." << endl;
     cout << "Images in the sequence: " << nImages << endl << endl;
+
+    if (is_localization_mode) {
+		cerr << endl << "Activate localization." << endl;
+        SLAM.ActivateLocalizationMode();
+	}
 
     // Main loop
     cv::Mat im;
@@ -125,6 +136,11 @@ int main(int argc, char **argv)
     cout << "-------" << endl << endl;
     cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
     cout << "mean tracking time: " << totaltime/nImages << endl;
+
+	if (!is_localization_mode) {
+    	// Save Map.
+    	SLAM.SaveMap("EurocMap.txt");
+	}
 
     // Save camera trajectory
     SLAM.SaveKeyFrameTrajectoryTUM("./euroc_output/KeyFrameTrajectoryEuRoC.txt");

@@ -52,7 +52,7 @@ namespace ORB_SLAM2
 {
 
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
+               const bool bUseViewer, Map* map, ORBVocabulary* voc, const string& strMapFile):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
         mbDeactivateLocalizationMode(false)
 {
     // Output welcome message
@@ -102,7 +102,25 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
     //Create the Map
-    mpMap = new Map();
+    if (map == NULL && strMapFile.empty()) {
+        cout << "Create new map." << endl;
+        mpMap = new Map();
+    } else {
+        mpMap = new Map();
+        if (!LoadMapCameraPara(strSettingsFile)) {
+            cerr << "Failed to load map camera setting from " << strMapFile << endl;
+            exit(-1);
+        }        
+        if (!LoadMap(strMapFile)) {
+            cerr << "Failed to load map from " << strMapFile << endl;
+            exit(-1);
+        }
+        cerr << "Map loaded with " << mpMap->MapPointsInMap() << " points."
+             << endl;
+	    for(auto kf: mpMap->GetAllKeyFrames()) {
+		    mpKeyFrameDatabase->add(kf);
+        }
+	}
 
     //Create Drawers. These are used by the Viewer
     mpFrameDrawer = new FrameDrawer(mpMap);
@@ -346,6 +364,24 @@ void System::Shutdown()
         pangolin::BindToContext("ORB-SLAM2: Map Viewer");
 }
 
+Map* System::GetMap() {return this->mpMap;}
+
+bool System::SaveMap(const string &filename) {
+    cerr << "System Saving to " << filename << endl;
+    return mpMap->Save(filename);
+}
+
+bool System::LoadMap(const string& filename) {
+    cerr << "Loading map from " << filename << endl;
+    return mpMap->Load(filename, *mpVocabulary);
+}
+
+bool System::LoadMapCameraPara(const string& filename) {
+    cerr << "Loading camera setting from " << filename << endl;
+    return mpMap->LoadCofficient(filename);
+}
+
+
 void System::SaveTrajectoryTUM(const string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
@@ -525,7 +561,7 @@ void System::SaveKeyFrameTrajectoryTUM_fe(const string &filename)
     cout << endl << "trajectory saved!" << endl;
 }
 
-void System::SaveMap(const string &filename)
+void System::SaveMapPoints(const string &filename)
 {
     cout << endl << "Saving map points to " << filename << " ..." << endl;
 
