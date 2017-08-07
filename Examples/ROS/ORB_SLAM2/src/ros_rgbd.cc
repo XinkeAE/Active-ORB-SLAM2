@@ -51,17 +51,25 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "RGBD");
     ros::start();
 
-    if(argc != 3)
+    if(argc != 3 && argc != 4)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM2 RGBD path_to_vocabulary path_to_settings" << endl;        
+        cerr << endl << "Usage: rosrun ORB_SLAM2 RGBD path_to_vocabulary path_to_settings (path_to_map)" << endl;        
         ros::shutdown();
         return 1;
-    }    
+    }   
+
+    string path_to_map = argc == 4 ? string(argv[3]) : "";
+    bool is_localization_mode = argc == 4;  
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD,true);
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD,true,NULL,NULL,path_to_map);
 
     ImageGrabber igb(&SLAM);
+
+    if (is_localization_mode) {
+		cerr << endl << "Activate localization." << endl;
+        SLAM.ActivateLocalizationMode();
+	}   
 
     ros::NodeHandle nh;
 
@@ -79,7 +87,11 @@ int main(int argc, char **argv)
     // Save camera trajectory
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
     SLAM.SaveTrajectoryTUM("Trajectory.txt");
-    SLAM.SaveMap("Map.txt");
+    SLAM.SaveMapPoints("MapPoints.txt");
+    
+    if(!is_localization_mode){
+        SLAM.SaveMap("ORBSLAM_Full_Map.txt");
+    }
 
     ros::shutdown();
 
