@@ -46,11 +46,11 @@ public:
         T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.25,
                                                -1, 0, 0, -0.1,
                                                 0,-1, 0, 0,
-                                                1, 1, 1, 1);
+                                                0, 0, 0, 1);
         T_cb_mat = (cv::Mat_<float>(4,4) <<     0, -1, 0, -0.1,
                                                 0, 0, -1, 0,
                                                 1,0, 0, -0.25,
-                                                1, 1, 1, 1);
+                                                0, 0, 0, 1);
         T_ws = cvMatToTF(T_ws_mat);
     }
 
@@ -61,6 +61,10 @@ public:
     tf::Transform T_ws; // transformation from slam frame (z forward, x right) to world frame (z up, x forward)
     cv::Mat T_ws_mat;
     cv::Mat T_cb_mat;
+
+    cv::Mat T_wb_mat;
+    cv::Mat T_wb_initial_mat;
+    bool initialized = false;
 
     ORB_SLAM2::System* mpSLAM;
     geometry_msgs::PoseStamped pose_out_;
@@ -152,7 +156,15 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     if (pose.empty())
         return;
     else{
-        tf::Transform pose_tf = cvMatToTF(T_ws_mat*pose*T_cb_mat);
+
+        if(!initialized){
+            T_wb_initial_mat = cv::Mat(T_ws_mat*pose*T_cb_mat);
+            initialized = true;
+        }
+        T_wb_mat = cv::Mat(T_ws_mat*pose*T_cb_mat);
+
+        tf::Transform pose_tf = cvMatToTF(T_wb_initial_mat.inv()*T_wb_mat);
+
         tf::Quaternion pose_orientation = (pose_tf).getRotation();
         tf::Vector3 pose_origin = (pose_tf).getOrigin();
 
@@ -165,7 +177,8 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         pose_out_.pose.orientation.z = pose_orientation.getZ();
         pose_out_.pose.orientation.w = pose_orientation.getW();
 
-        posePublisher.publish(pose_out_);
+        if(initialized)
+            posePublisher.publish(pose_out_);
 
     }
 
