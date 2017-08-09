@@ -42,11 +42,25 @@ using namespace std;
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub):mpSLAM(pSLAM),posePublisher(posePub){}
+    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub):mpSLAM(pSLAM),posePublisher(posePub){
+        T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.25,
+                                               -1, 0, 0, -0.1,
+                                                0,-1, 0, 0,
+                                                1, 1, 1, 1);
+        T_cb_mat = (cv::Mat_<float>(4,4) <<     0, -1, 0, -0.1,
+                                                0, 0, -1, 0,
+                                                1,0, 0, -0.25,
+                                                1, 1, 1, 1);
+        T_ws = cvMatToTF(T_ws_mat);
+    }
 
     void GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
 
     tf::Transform cvMatToTF ( cv::Mat Tcw );
+
+    tf::Transform T_ws; // transformation from slam frame (z forward, x right) to world frame (z up, x forward)
+    cv::Mat T_ws_mat;
+    cv::Mat T_cb_mat;
 
     ORB_SLAM2::System* mpSLAM;
     geometry_msgs::PoseStamped pose_out_;
@@ -138,9 +152,9 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     if (pose.empty())
         return;
     else{
-        tf::Transform pose_tf = cvMatToTF(pose);
-        tf::Quaternion pose_orientation = pose_tf.getRotation();
-        tf::Vector3 pose_origin = pose_tf.getOrigin();
+        tf::Transform pose_tf = cvMatToTF(T_ws_mat*pose*T_cb_mat);
+        tf::Quaternion pose_orientation = (pose_tf).getRotation();
+        tf::Vector3 pose_origin = (pose_tf).getOrigin();
 
         pose_out_.header.stamp = cv_ptrRGB->header.stamp;
         pose_out_.pose.position.x = pose_origin.getX();
