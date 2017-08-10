@@ -65,6 +65,7 @@ public:
     cv::Mat T_wb_mat;
     cv::Mat T_wb_initial_mat;
     bool initialized = false;
+    int counter = 0;
 
     ORB_SLAM2::System* mpSLAM;
     geometry_msgs::PoseStamped pose_out_;
@@ -159,7 +160,9 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 
         if(!initialized){
             T_wb_initial_mat = cv::Mat(T_ws_mat*pose*T_cb_mat);
-            initialized = true;
+            counter ++;
+            if (counter > 5)
+                initialized = true;
         }
         T_wb_mat = cv::Mat(T_ws_mat*pose*T_cb_mat);
 
