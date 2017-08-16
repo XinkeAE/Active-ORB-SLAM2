@@ -43,14 +43,25 @@ class ImageGrabber
 {
 public:
     ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub):mpSLAM(pSLAM),posePublisher(posePub){
-        T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0,//0.25,
-                                               -1, 0, 0, 0,//-0.1,
+        T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
+                                               -1, 0, 0, -0.1, // -0.1,//-0.1,
                                                 0,-1, 0, 0,
                                                 0, 0, 0, 1);
-        T_cb_mat = (cv::Mat_<float>(4,4) <<     0, -1, 0, -0.1,
+        T_cb_mat = (cv::Mat_<float>(4,4) <<     0, -1, 0, -0.1, //-0.1,
                                                 0, 0, -1, 0,
-                                                1,0, 0, -0.22,
+                                                1,0, 0, -0.22, //-0.22,
                                                 0, 0, 0, 1);
+        
+        /*
+        T_ws_mat = (cv::Mat_<float>(4,4) <<    1, 0, 0, 0,//0.25,
+                                               0, 1, 0, 0,//-0.1,
+                                                0,0, 1, 0,
+                                                0, 0, 0, 1);
+        T_cb_mat = (cv::Mat_<float>(4,4) <<     1, 0, 0, 0,
+                                                0, 1, 0, 0,
+                                                0, 0, 1, 0,
+                                                0, 0, 0, 1);
+        */
         T_ws = cvMatToTF(T_ws_mat);
     }
 
@@ -153,11 +164,11 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     }
 
     cv::Mat pose = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
-
+    
     if (pose.empty())
         return;
     else{
-
+        pose = pose.inv();
         if(!initialized){
             T_wb_initial_mat = cv::Mat(T_ws_mat*pose*T_cb_mat);
             counter ++;
@@ -192,7 +203,8 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 tf::Transform ImageGrabber::cvMatToTF ( cv::Mat Tcw ) {
     tf::Transform cam_to_first_keyframe_transform;
     // invert since Tcw (transform from world to camera)
-    cv::Mat pose = Tcw.inv();
+    //cv::Mat pose = Tcw.inv();
+    cv::Mat pose = Tcw;
 
     //Extract transformation from the raw orb SLAM pose
     tf::Vector3 origin;
