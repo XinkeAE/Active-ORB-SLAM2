@@ -43,13 +43,13 @@ class ImageGrabber
 {
 public:
     ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub):mpSLAM(pSLAM),posePublisher(posePub){
-        T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.25,
-                                               -1, 0, 0, -0.1,
+        T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0,//0.25,
+                                               -1, 0, 0, 0,//-0.1,
                                                 0,-1, 0, 0,
                                                 0, 0, 0, 1);
         T_cb_mat = (cv::Mat_<float>(4,4) <<     0, -1, 0, -0.1,
                                                 0, 0, -1, 0,
-                                                1,0, 0, -0.25,
+                                                1,0, 0, -0.22,
                                                 0, 0, 0, 1);
         T_ws = cvMatToTF(T_ws_mat);
     }
