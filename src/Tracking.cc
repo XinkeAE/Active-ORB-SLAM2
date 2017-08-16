@@ -332,10 +332,11 @@ void Tracking::Track()
             }
             else
             {
+                //mbVO = false;
                 if(!mbVO)
                 {
                     // In last frame we tracked enough MapPoints in the map
-
+                    //std::cout << "not in VO mode" << std::endl;
                     if(!mVelocity.empty())
                     {
                         bOK = TrackWithMotionModel();
@@ -932,6 +933,7 @@ bool Tracking::TrackWithMotionModel()
     if(mbOnlyTracking)
     {
         mbVO = nmatchesMap<10;
+        //mbVO = false;
         return nmatches>20;
     }
 
