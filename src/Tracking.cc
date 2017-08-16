@@ -325,7 +325,7 @@ void Tracking::Track()
         else
         {
             // Localization Mode: Local Mapping is deactivated
-
+            mbVO = false;
             if(mState==LOST)
             {
                 bOK = Relocalization();
