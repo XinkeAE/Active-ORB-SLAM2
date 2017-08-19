@@ -37,12 +37,24 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_broadcaster.h>
 
+// octomap 
+#include <octomap/octomap.h>
+#include <octomap/ColorOcTree.h>
+#include <octomap/math/Pose6D.h>
+#include <octomap_ros/conversions.h>
+#include <octomap_msgs/Octomap.h>
+#include <octomap_msgs/conversions.h>
+
+// Eigen
+#include <Eigen/Core>
+#include <Eigen/Geometry> 
+
 using namespace std;
 
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub):mpSLAM(pSLAM),posePublisher(posePub){
+    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub, ros::Publisher octoPub):mpSLAM(pSLAM),posePublisher(posePub),octomapPublisher(octoPub){
         T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
                                                -1, 0, 0, -0.1, // -0.1,//-0.1,
                                                 0,-1, 0, 0,
@@ -51,18 +63,10 @@ public:
                                                 0, 0, -1, 0,
                                                 1,0, 0, -0.22, //-0.22,
                                                 0, 0, 0, 1);
-        
-        /*
-        T_ws_mat = (cv::Mat_<float>(4,4) <<    1, 0, 0, 0,//0.25,
-                                               0, 1, 0, 0,//-0.1,
-                                                0,0, 1, 0,
-                                                0, 0, 0, 1);
-        T_cb_mat = (cv::Mat_<float>(4,4) <<     1, 0, 0, 0,
-                                                0, 1, 0, 0,
-                                                0, 0, 1, 0,
-                                                0, 0, 0, 1);
-        */
+
         T_ws = cvMatToTF(T_ws_mat);
+
+        globalOctoMap = new octomap::OcTree(0.05f);
     }
 
     void GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
@@ -72,15 +76,27 @@ public:
     tf::Transform T_ws; // transformation from slam frame (z forward, x right) to world frame (z up, x forward)
     cv::Mat T_ws_mat;
     cv::Mat T_cb_mat;
+    cv::Mat T_wc_mat;
 
     cv::Mat T_wb_mat;
     cv::Mat T_wb_initial_mat;
     bool initialized = false;
     int counter = 0;
 
+    // declare the octomap here
+    octomap::OcTree* globalOctoMap;
+    cv::Mat CamIntrinsic;
+    float depthFactor;
+    float camera_fx;
+    float camera_fy;
+    float camera_cx;
+    float camera_cy;
+
     ORB_SLAM2::System* mpSLAM;
     geometry_msgs::PoseStamped pose_out_;
+    octomap_msgs::Octomap octomap_out_;
     ros::Publisher posePublisher; 
+    ros::Publisher octomapPublisher;
 };
 
 int main(int argc, char **argv)
@@ -109,8 +125,9 @@ int main(int argc, char **argv)
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
 
     ros::Publisher pose_pub = nh.advertise<geometry_msgs::PoseStamped> ( "/orb/pose_est", 2 );
+    ros::Publisher octo_pub = nh.advertise<octomap_msgs::Octomap>( "octomap_3d", 1 );
 
-    ImageGrabber igb(&SLAM, pose_pub);
+    ImageGrabber igb(&SLAM, pose_pub, octo_pub);
 
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
 
@@ -164,6 +181,14 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     }
 
     cv::Mat pose = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+
+    CamIntrinsic = mpSLAM->GetCamIntrinsic();
+    camera_fx = CamIntrinsic.at<float>(0,0);
+    camera_fy = CamIntrinsic.at<float>(1,1);
+    camera_cx = CamIntrinsic.at<float>(0,2);
+    camera_cy = CamIntrinsic.at<float>(1,2);
+
+    depthFactor = mpSLAM->GetDepthScaleFactor();
     
     if (pose.empty())
         return;
@@ -190,6 +215,61 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         pose_out_.pose.orientation.y = pose_orientation.getY();
         pose_out_.pose.orientation.z = pose_orientation.getZ();
         pose_out_.pose.orientation.w = pose_orientation.getW();
+
+        // build octomap
+        if(mpSLAM->GetKeyframeStatus()){
+
+            cv::Mat depth = cv_ptrD->image.clone();
+            depth.convertTo(depth,CV_32F,depthFactor);
+
+            T_wc_mat = cv::Mat(T_wb_mat*T_cb_mat.inv());
+            tf::Transform T_wc_tf = cvMatToTF(T_wc_mat);
+
+            octomap::pose6d T_wc_octo = octomap::poseTfToOctomap(T_wc_tf);
+
+            octomap::Pointcloud local_cloud;
+
+            for(int m=0; m<depth.rows;m++){
+                for (int n=0; n<depth.cols; n++){
+
+                    float d = depth.ptr<float>(m)[n];
+                    if(d == 0)
+                        continue;
+                    
+                    float z = d;
+                    float x = (float(n) - camera_cx) * z / camera_fx;
+                    float y = (float(m) - camera_cy) * z / camera_fy;
+
+                    local_cloud.push_back(x,y,z);
+
+                }
+            }
+
+            local_cloud.transform(T_wc_octo);
+
+            // slow!!!
+            globalOctoMap->insertPointCloud(local_cloud, octomap::point3d(T_wc_tf.getOrigin().getX(),
+                                                                        T_wc_tf.getOrigin().getY(),
+                                                                        T_wc_tf.getOrigin().getZ()));
+
+
+
+            std::cout << "time elapse: " << time_end - time_start << std::endl;
+
+            //globalOctoMap->updateInnerOccupancy();
+
+            /*
+            octomap_msgs::binaryMapToMsg(*globalOctoMap, octomap_out_);
+
+            octomap_out_.binary = 1;
+            octomap_out_.id = 1;
+            octomap_out_.resolution = 0.05f;
+            octomap_out_.header.frame_id = "/map";
+            octomap_out_.header.stamp = cv_ptrRGB->header.stamp;
+            
+            octomapPublisher.publish(octomap_out_);
+            */
+        }
 
         if(initialized)
             posePublisher.publish(pose_out_);

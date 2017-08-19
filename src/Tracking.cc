@@ -46,7 +46,7 @@ namespace ORB_SLAM2
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
-    mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
+    mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0), mbKeyframe(false)
 {
     // Load camera parameters from settings file
 
@@ -146,6 +146,14 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
             mDepthMapFactor = 1.0f/mDepthMapFactor;
     }
 
+}
+
+cv::Mat Tracking::GetCamIntrinsic(){
+    return mK.clone();
+}
+
+float Tracking::GetDepthScaleFactor(){
+    return mDepthMapFactor;
 }
 
 void Tracking::SetLocalMapper(LocalMapping *pLocalMapper)
@@ -274,6 +282,7 @@ void Tracking::Track()
     mLastProcessedState=mState;
 
     bool isKeyframe = false;
+    mbKeyframe = isKeyframe;
 
     // Get Map Mutex -> Map cannot be changed
     unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
@@ -460,6 +469,7 @@ void Tracking::Track()
             if(NeedNewKeyFrame())
             {
                 isKeyframe = true;
+                mbKeyframe = isKeyframe;
                 CreateNewKeyFrame();
             }
                 

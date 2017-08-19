@@ -366,6 +366,19 @@ void System::Shutdown()
 
 Map* System::GetMap() {return this->mpMap;}
 
+bool System::GetKeyframeStatus()
+{
+    return mpTracker->mbKeyframe;
+}
+
+cv::Mat System::GetCamIntrinsic(){
+    return mpTracker->GetCamIntrinsic();
+}
+
+float System::GetDepthScaleFactor(){
+    return mpTracker->GetDepthScaleFactor();
+}
+
 bool System::SaveMap(const string &filename) {
     cerr << "System Saving to " << filename << endl;
     return mpMap->Save(filename);

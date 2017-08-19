@@ -114,6 +114,12 @@ public:
     // See format details at: http://www.cvlibs.net/datasets/kitti/eval_odometry.php
     void SaveTrajectoryKITTI(const string &filename);
 
+    // Get keyframe status
+    bool GetKeyframeStatus();
+
+    cv::Mat GetCamIntrinsic();
+    float GetDepthScaleFactor();
+
     // Save/Load functions
 	Map* GetMap();
     bool SaveMap(const string &filename);
