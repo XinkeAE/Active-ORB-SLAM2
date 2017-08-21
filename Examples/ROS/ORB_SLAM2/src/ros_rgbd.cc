@@ -254,8 +254,6 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 
 
 
-            std::cout << "time elapse: " << time_end - time_start << std::endl;
-
             //globalOctoMap->updateInnerOccupancy();
 
             /*
