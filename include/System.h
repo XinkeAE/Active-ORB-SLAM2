@@ -35,6 +35,7 @@
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
 #include "Viewer.h"
+#include "Planning.h"
 
 namespace ORB_SLAM2
 {
@@ -45,6 +46,7 @@ class Map;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+class Planning;
 
 class System
 {
@@ -152,6 +154,9 @@ private:
     // performs relocalization if tracking fails.
     Tracking* mpTracker;
 
+	// Perform planning.
+	Planning* mpPlanner;
+
     // Local Mapper. It manages the local map and performs local bundle adjustment.
     LocalMapping* mpLocalMapper;
 
@@ -167,6 +172,7 @@ private:
 
     // System threads: Local Mapping, Loop Closing, Viewer.
     // The Tracking thread "lives" in the main execution thread that creates the System object.
+	std::thread* mptPlanning;
     std::thread* mptLocalMapping;
     std::thread* mptLoopClosing;
     std::thread* mptViewer;
