@@ -1,6 +1,8 @@
 #ifndef PLANNING_H
 #define PLANNING_H
 
+#include <mutex>
+#include <thread>
 #include <vector>
 
 #include "MapPoint.h"
@@ -26,11 +28,22 @@ public:
 
     // Get all visible map points associated with the given pose.
     std::vector<MapPoint*> GetVisibleMapPoints(cv::Mat pose);
+	// Request planning thread to stop.
+	void RequestFinish();
 
 private:
     // Get closest KeyFrame to the given pose.
     int GetClosestKeyFrameId(cv::Mat pose);
 
+	// Check if the thread should stop.
+	bool CheckFinish();
+	void SetFinish();
+	bool isFinished();
+    bool mbFinishRequested;
+    bool mbFinished;
+	bool mbStopped;
+	std::mutex mMutexFinish;
+	std::mutex mMutexStop;
 };
 
 }  // namespace ORB_SLAM
