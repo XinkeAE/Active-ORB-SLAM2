@@ -20,8 +20,21 @@
 
 #include "MapPoint.h"
 #include "ORBmatcher.h"
+#include <math.h>
 
 #include<mutex>
+
+void compute_std_pts(std::vector<float> v, float & mean, float & stdev)
+{
+    float sum = std::accumulate(v.begin(), v.end(), 0.0);
+    mean = sum / v.size();
+
+    std::vector<float> diff(v.size());
+    std::transform(v.begin(), v.end(), diff.begin(),
+                std::bind2nd(std::minus<float>(), mean));
+    float sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    stdev = std::sqrt(sq_sum / v.size());
+}
 
 namespace ORB_SLAM2
 {
@@ -368,6 +381,7 @@ void MapPoint::UpdateNormalAndDepth()
     cv::Mat normal = cv::Mat::zeros(3,1,CV_32F);
     int n=0;
     mNormalVectors.clear();
+    theta_sVector.clear();
     for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
@@ -375,6 +389,9 @@ void MapPoint::UpdateNormalAndDepth()
         cv::Mat normali = mWorldPos - Owi;
         normal = normal + normali/cv::norm(normali);
         mNormalVectors.push_back(normali/cv::norm(normali));
+        // compute the viewing angle in the world frame
+        float theta = atan2(normali.at<float>(0,0),normali.at<float>(2,0));
+        theta_sVector.push_back(theta);
         n++;
     }
 
@@ -389,6 +406,9 @@ void MapPoint::UpdateNormalAndDepth()
         mfMaxDistance = dist*levelScaleFactor;
         mfMinDistance = mfMaxDistance/pRefKF->mvScaleFactors[nLevels-1];
         mNormalVector = normal/n;
+        // compute the mean and std of viewing angle
+        compute_std_pts(theta_sVector, theta_mean, theta_std);
+
     }
 }
 

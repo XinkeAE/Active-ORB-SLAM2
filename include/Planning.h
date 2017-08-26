@@ -59,6 +59,11 @@ private:
 	std::vector<double> q_start;
 	std::vector<double> q_goal;
 
+	// Planner
+	plan_slam* pl;
+	plannerType p_type;
+	planningObjective o_type;
+
 	// Check if tracking thread sends a request, which contains a KeyFrame and a
 	// current pose.
 	bool CheckHasRequest();
@@ -68,6 +73,7 @@ private:
 	std::mutex mMutexRequest;
 
 	// Store the planned trajectory.
+	std::vector<std::vector<double>> current_trajectory;
 	std::vector<std::vector<double>> planned_trajectory;
 
 	// Keyframe queue for planning (Not used for now).

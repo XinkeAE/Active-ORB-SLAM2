@@ -258,7 +258,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,timestamp);
 
 	// TODO: Change the arguments.
-	mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
+	//mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;

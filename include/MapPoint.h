@@ -114,6 +114,9 @@ public:
 
     std::vector<cv::Mat> mNormalVectors;
 
+    std::vector<float> theta_sVector;
+    float theta_mean;
+    float theta_std;
 
     static std::mutex mGlobalMutex;
 

@@ -6,12 +6,16 @@ namespace ORB_SLAM2 {
 
 Planning::Planning(cv::Mat goal_pose, Map* pMap){
     mpMap = pMap;
+    hasRequest = false;
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
-    plannerType p_type = PLANNER_RRTSTAR;
-    planningObjective o_type = OBJECTIVE_PATHLENGTH;
+    p_type = PLANNER_RRTSTAR;
+    o_type = OBJECTIVE_PATHLENGTH;
 
     q_start = {0, 0, 3.14/4};
-	q_goal = {5.584, -2.0431, -1.5707};
+    q_goal = {5.584, -2.0431, -1.5707};
+    
+    pl = new plan_slam();
+  
 }
 
 void Planning::Run() {
@@ -20,7 +24,21 @@ void Planning::Run() {
         if (CheckHasRequest()) {
             // Call Planner with currKF and currPose.
 
+            // update map here
+
+            // do actual planning
+            pl->plan(q_start, q_goal, 2, p_type, o_type);
+
+            // save trajectory
+            current_trajectory.clear();
+            current_trajectory = pl->get_path_matrix();
+
+            // check the point when the visibility constrain is not satisfied
+            int nxt_start = pl->AdvanceStepCamera(current_trajectory);
+            q_start = current_trajectory[nxt_start];
+
             // Set planned trajectory.
+            planned_trajectory.insert(planned_trajectory.end(), current_trajectory.begin(), current_trajectory.begin()+nxt_start);
         }
     }
 }
