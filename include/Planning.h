@@ -3,6 +3,7 @@
 
 #include <deque>
 #include <mutex>
+#include <set>
 #include <thread>
 #include <vector>
 
@@ -37,11 +38,10 @@ public:
 	void RequestFinish();
 	// Insert KeyFrame into the queue.
 	void InsertKeyFrame(KeyFrame* pKF);
+	// Get all possibly visiable MapPoints for a given pose.
+	std::set<MapPoint*> GetVisiblePoints(cv::Mat pose);
 
 private:
-    // Get closest KeyFrame to the given pose.
-    int GetClosestKeyFrameId(cv::Mat pose);
-
 	// Check if the thread should stop.
 	bool CheckFinish();
 	void SetFinish();

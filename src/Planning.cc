@@ -1,5 +1,7 @@
 #include "Planning.h"
 
+#include <cmath>
+
 namespace ORB_SLAM2 {
 
 Planning::Planning(cv::Mat goal_pose, Map* pMap){
@@ -36,8 +38,38 @@ void Planning::RequestFinish() {
     mbFinishRequested = true;
 }
 
-int Planning::GetClosestKeyFrameId(cv::Mat pose) {
-    return 0;
+float GetTranslationMatrixDistance(const cv::Mat& pose1,
+                                   const cv::Mat& pose2) {
+    return pow(pose1.at<float>(0, 3) - pose2.at<float>(0, 3), 2) +
+           pow(pose1.at<float>(1, 3) - pose2.at<float>(1, 3), 2) +
+           pow(pose1.at<float>(2, 3) - pose2.at<float>(2, 3), 2);
+}
+
+// Given a Tsc, find the set of possibly visible points from the closest key
+// frame.
+std::set<MapPoint*> Planning::GetVisiblePoints(cv::Mat pose) {
+    unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+    std::vector<KeyFrame*> key_frames = mpMap->GetAllKeyFrames();
+    // Find the closest key frame.
+    double min_dist =
+            GetTranslationMatrixDistance(pose, key_frames.front()->GetPose());
+    KeyFrame* min_kf = key_frames.front();
+    for (auto* kf : key_frames) {
+        float curr_dist = GetTranslationMatrixDistance(pose, kf->GetPose());
+        if (min_dist > curr_dist) {
+            min_dist = curr_dist;
+            min_kf = kf;
+        }
+    }
+    // Find all visible points from the key frame.
+    std::set<MapPoint*> visible_mps = min_kf->GetMapPoints();
+    for (auto* kf : min_kf->GetConnectedKeyFrames()) {
+        std::set<MapPoint*> connected_visible_mps = kf->GetMapPoints();
+        visible_mps.insert(connected_visible_mps.begin(),
+                           connected_visible_mps.end());
+    }
+    cout << "#visible points=" << visible_mps.size() << endl;
+    return visible_mps;
 }
 
 bool Planning::CheckFinish() {
