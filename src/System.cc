@@ -130,8 +130,9 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //(it will live in the main thread of execution, the one that called this constructor)
     mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                              mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+                             
 	// Initialize the Planning thread
-	mpPlanner = new Planning(cv::Mat());
+	mpPlanner = new Planning(cv::Mat(), mpMap);
 	mptPlanning = new thread(&ORB_SLAM2::Planning::Run, mpPlanner);
 
     //Initialize the Local Mapping thread and launch
@@ -255,6 +256,9 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     }
 
     cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,timestamp);
+
+	// TODO: Change the arguments.
+	mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;

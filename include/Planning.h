@@ -1,6 +1,7 @@
 #ifndef PLANNING_H
 #define PLANNING_H
 
+#include <deque>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "ORBVocabulary.h"
 #include "KeyFrame.h"
 #include "ORBextractor.h"
+#include "Map.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -18,18 +20,20 @@ namespace ORB_SLAM2 {
 
 class MapPoint;
 class KeyFrame;
+class Map;
 
 class Planning {
 public:
-    Planning(cv::Mat goal_pose);
+    Planning(cv::Mat goal_pose, Map* pMap);
 
     // Run the planner.
     void Run();
-
-    // Get all visible map points associated with the given pose.
-    std::vector<MapPoint*> GetVisibleMapPoints(cv::Mat pose);
+	// Send request from Tracking thread to planning thread.
+    void SendPlanningRequest(cv::Mat pose, KeyFrame* kf);
 	// Request planning thread to stop.
 	void RequestFinish();
+	// Insert KeyFrame into the queue.
+	void InsertKeyFrame(KeyFrame* pKF);
 
 private:
     // Get closest KeyFrame to the given pose.
@@ -44,6 +48,26 @@ private:
 	bool mbStopped;
 	std::mutex mMutexFinish;
 	std::mutex mMutexStop;
+
+    // Map
+    Map* mpMap;
+
+	// Check if tracking thread sends a request, which contains a KeyFrame and a
+	// current pose.
+	bool CheckHasRequest();
+	bool hasRequest;
+	KeyFrame* currKF;
+	cv::Mat currPose;
+	std::mutex mMutexRequest;
+
+	// Store the planned trajectory.
+	std::vector<std::vector<double>> planned_trajectory;
+
+	// Keyframe queue for planning (Not used for now).
+	std::deque<KeyFrame*> mKeyFrameQueue;
+	std::mutex mMutexKeyFrameQueue;
+	int GetNumNewKeyFrames();
+	KeyFrame* PopKeyFrameQueue(int num_pop);
 };
 
 }  // namespace ORB_SLAM
