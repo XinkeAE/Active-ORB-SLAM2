@@ -2,7 +2,7 @@
 
 namespace ORB_SLAM2 {
     Planning::Planning(cv::Mat goal_pose) {}
-    Planning::Planning(cv::Mat goal_pose, Map* pMap_){
+    Planning::Planning(cv::Mat goal_pose, Map* pMap){
         mpMap = pMap;
     }
     void Planning::Run() {}
