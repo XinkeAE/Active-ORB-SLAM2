@@ -217,7 +217,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         pose_out_.pose.orientation.w = pose_orientation.getW();
 
         // build octomap
-        if(mpSLAM->GetKeyframeStatus()){
+        /*if(mpSLAM->GetKeyframeStatus()){
 
             cv::Mat depth = cv_ptrD->image.clone();
             depth.convertTo(depth,CV_32F,depthFactor);
@@ -256,7 +256,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 
             //globalOctoMap->updateInnerOccupancy();
 
-            /*
+            
             octomap_msgs::binaryMapToMsg(*globalOctoMap, octomap_out_);
 
             octomap_out_.binary = 1;
@@ -266,8 +266,8 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
             octomap_out_.header.stamp = cv_ptrRGB->header.stamp;
             
             octomapPublisher.publish(octomap_out_);
-            */
-        }
+        
+        }*/
 
         if(initialized)
             posePublisher.publish(pose_out_);
