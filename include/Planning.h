@@ -9,6 +9,7 @@
 #include "ORBVocabulary.h"
 #include "KeyFrame.h"
 #include "ORBextractor.h"
+#include "Map.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -16,10 +17,12 @@ namespace ORB_SLAM2 {
 
 class MapPoint;
 class KeyFrame;
+class Map;
 
 class Planning {
 public:
     Planning(cv::Mat goal_pose);
+    Planning(cv::Mat goal_pose, Map* pMap);
 
     // Run the planner.
     void Run();
@@ -31,6 +34,8 @@ private:
     // Get closest KeyFrame to the given pose.
     int GetClosestKeyFrameId(cv::Mat pose);
 
+    // Map
+    Map* mpMap;
 };
 
 }  // namespace ORB_SLAM
