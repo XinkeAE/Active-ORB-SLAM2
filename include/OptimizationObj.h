@@ -25,8 +25,8 @@ using namespace std;
 class OptimizationObj : public camera
 {
 public:
-	OptimizationObj() : camera(MAP_FILE, UB_FILE, LB_FILE) {}
-
+	//OptimizationObj() : camera(MAP_FILE, UB_FILE, LB_FILE) {}
+	OptimizationObj() : camera() {}
 	Cost motionCost(ppMatrix);
 
 	Cost pathLengthObjective(ppMatrix);

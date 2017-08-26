@@ -15,6 +15,15 @@ camera::camera(){
     min_dist = 0.1;
 
     feature_threshold = THRES;
+    T_sw<<0,   -1.0000,         0,    -0.1000,
+    0,         0,   -1.0000,         0,
+    1.0000,         0,         0,   -0.2500,
+    0,         0,        0,    1.0000;
+
+T_bc <<0 ,        0 ,   1.0000 ,   0.2500 ,
+      -1.0000 ,        0  ,       0 ,  -0.1000,
+      0 ,  -1.0000 ,        0  ,       0,
+      0 ,        0  ,       0   , 1.0000;
 
 }
 
@@ -54,7 +63,7 @@ camera::camera(std::string map_file, std::string upper_bound_file, std::string l
 
 }
 
-/*
+
 camera::camera(std::vector<MapPoint*> &vpPts)
 {
 	std::cout << "Initializing camera data..." << std::endl;
@@ -86,7 +95,7 @@ camera::camera(std::vector<MapPoint*> &vpPts)
             0 ,        0  ,       0   , 1.0000;
 
 }
-*/
+
 
 int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
     int num_pt=map_vec.size();
@@ -235,7 +244,7 @@ std::vector<float>  camera::read_text_single_line(std::string filename)
 
 }
 
-/*
+
 void camera::update_map(std::vector<MapPoint*> &vpPts)
 {
     if(!map_vec.empty())
@@ -258,19 +267,6 @@ void camera::update_map(std::vector<MapPoint*> &vpPts)
             cv::Mat Normal = pPt->GetNormal();
             int number_observed = pPt->Observations();
 
-            std::vector<float> theta_s;
-            float theta_mean;
-            float theta_std;
-    
-            for(size_t j=0; j<pPt->mNormalVectors.size(); j++)
-            {
-                cv::Mat normali = pPt->mNormalVectors[j];
-                float theta = atan2(normali.at<float>(0,0),normali.at<float>(2,0));
-                theta_s.push_back(theta);
-            }
-    
-            compute_std(theta_s, theta_mean, theta_std);
-
             std::vector<float> one_pt;
             one_pt.push_back(Pos.at<float>(0));
             one_pt.push_back(Pos.at<float>(1));
@@ -278,12 +274,14 @@ void camera::update_map(std::vector<MapPoint*> &vpPts)
             one_pt.push_back(1f);
 
             map_vec.push_back(one_pt);
+            float theta_mean=pPt->theta_mean;
+            float theta_std=pPt->theta_std;
             lower_bound.push_back(theta_mean-2.5*theta_std);
             upper_bound.push_back(theta_mean+2.5*theta_std);
         }
     }
 }
-*/
+
 
 void camera::compute_std(std::vector<float> v, float & mean, float & stdev)
 {

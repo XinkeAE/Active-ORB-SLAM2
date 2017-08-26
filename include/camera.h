@@ -29,7 +29,7 @@ public:
 
     camera(std::string map_file, std::string upper_bound_file, std::string lower_bound_file);
 
-    //camera(std::vector<MapPoint*> &vpPts);
+    camera(std::vector<MapPoint*> &vpPts);
     
     std::vector<std::vector<float> > read_text(std::string points);
 
@@ -45,7 +45,7 @@ public:
 
     bool IsStateVisiblilty(float x_w, float y_w, float theta_rad_w);
 
-    //void update_map(std::vector<MapPoint*> &vpPts)
+    void update_map(std::vector<MapPoint*> &vpPts)
 
 private:
 

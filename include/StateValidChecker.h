@@ -52,7 +52,8 @@ class StateValidChecker : public collisionDetection, public camera
 public:
 	StateValidChecker(const ob::SpaceInformationPtr &si) :
 		mysi_(si.get()),
-		camera(MAP_FILE, UB_FILE, LB_FILE),
+		//camera(MAP_FILE, UB_FILE, LB_FILE),
+		camera(),
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),
@@ -62,7 +63,8 @@ public:
 	{};
 
 	StateValidChecker() :
-		camera(MAP_FILE, UB_FILE, LB_FILE),
+		//camera(MAP_FILE, UB_FILE, LB_FILE),
+		camera(),
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),

@@ -192,7 +192,7 @@ bool plan_slam::plan(Vector q_start, Vector q_goal, double runtime, plannerType 
 	 // create a planner for the defined space
 	 // To add a planner, the #include library must be added above
 	 ob::PlannerPtr planner = allocatePlanner(si, p_type);
-
+	 //planner->update_map(mPts);
 	 // set the problem we are trying to solve for the planner
 	 planner->setProblemDefinition(pdef);
 
