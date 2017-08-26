@@ -16,6 +16,9 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "../include/plan.h"
+#include "../include/StateValidChecker.h"
+
 namespace ORB_SLAM2 {
 
 class MapPoint;
@@ -50,7 +53,11 @@ private:
 	std::mutex mMutexStop;
 
     // Map
-    Map* mpMap;
+	Map* mpMap;
+	
+	// Start and goal
+	std::vector<double> q_start;
+	std::vector<double> q_goal;
 
 	// Check if tracking thread sends a request, which contains a KeyFrame and a
 	// current pose.

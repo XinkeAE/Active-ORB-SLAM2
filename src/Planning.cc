@@ -4,6 +4,12 @@ namespace ORB_SLAM2 {
 
 Planning::Planning(cv::Mat goal_pose, Map* pMap){
     mpMap = pMap;
+    std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
+    plannerType p_type = PLANNER_RRTSTAR;
+    planningObjective o_type = OBJECTIVE_PATHLENGTH;
+
+    q_start = {0, 0, 3.14/4};
+	q_goal = {5.584, -2.0431, -1.5707};
 }
 
 void Planning::Run() {
