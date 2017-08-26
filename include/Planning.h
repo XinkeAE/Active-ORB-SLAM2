@@ -38,7 +38,7 @@ public:
 	void RequestFinish();
 	// Insert KeyFrame into the queue.
 	void InsertKeyFrame(KeyFrame* pKF);
-	// Get all possibly visiable MapPoints for a given pose.
+	// Get all possibly visible MapPoints for a given pose.
 	std::set<MapPoint*> GetVisiblePoints(cv::Mat pose);
 
 private:
