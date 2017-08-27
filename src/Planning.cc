@@ -11,7 +11,7 @@ Planning::Planning(cv::Mat goal_pose, Map* pMap){
     p_type = PLANNER_RRTSTAR;
     o_type = OBJECTIVE_PATHLENGTH;
 
-    q_start = {0, 0, 3.14/4};
+    q_start = {0, 0, 0};
     q_goal = {5.584, -2.0431, -1.5707};
     
     pl = new plan_slam();
@@ -25,6 +25,13 @@ void Planning::Run() {
             // Call Planner with currKF and currPose.
 
             // update map here
+            // 1. access to the map
+            // 2. get the map points 
+            // 3. compute the Upper bound, the lower bound
+            // ppMatrix Map = 
+            // Vector UB = 
+            // Vector LB = 
+            //pl->UpdateMap(Map, UB, LB);
 
             // do actual planning
             pl->plan(q_start, q_goal, 2, p_type, o_type);
