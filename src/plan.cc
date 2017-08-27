@@ -42,12 +42,12 @@ ob::PlannerPtr plan_slam::allocatePlanner(ob::SpaceInformationPtr si, plannerTyp
     {
         case PLANNER_RRT:
         {
-            return std::make_shared<og::RRT>(si);
+            return std::make_shared<og::RRT>(si, MD);
             break;
         }
         case PLANNER_RRTSTAR:
         {
-            return std::make_shared<og::RRTstar>(si);
+            return std::make_shared<og::RRTstar>(si, MD);
             break;
         }
         default:
@@ -68,7 +68,7 @@ ob::OptimizationObjectivePtr plan_slam::getPathLengthObjective(const ob::SpaceIn
 
     OMPL_INFORM("Loading path length optimization objective.");
 
-    return ob::OptimizationObjectivePtr(new LengthObjective(si));
+    return ob::OptimizationObjectivePtr(new LengthObjective(si, MD));
 }
 
 /** Return an optimization objective which attempts to minimiaze turn angle. */
@@ -76,7 +76,7 @@ ob::OptimizationObjectivePtr plan_slam::getMyObjective(const ob::SpaceInformatio
 {
     OMPL_INFORM("Loading custom optimization objective.");
 
-    return ob::OptimizationObjectivePtr(new CameraObjective(si));
+    return ob::OptimizationObjectivePtr(new CameraObjective(si, MD));
 }
 
 /** Create an optimization objective equivalent to the one returned by
@@ -85,8 +85,8 @@ ob::OptimizationObjectivePtr plan_slam::getWeightedObjective(const ob::SpaceInfo
 {
     OMPL_INFORM("Loading multi-objective optimization.");
 
-    ob::OptimizationObjectivePtr lengthObj(new LengthObjective(si));
-    ob::OptimizationObjectivePtr customObj(new CameraObjective(si));
+    ob::OptimizationObjectivePtr lengthObj(new LengthObjective(si, MD));
+    ob::OptimizationObjectivePtr customObj(new CameraObjective(si, MD));
 
     return 1.0*lengthObj + customObj;
 }
@@ -126,9 +126,16 @@ void plan_slam::getPath(ob::ProblemDefinitionPtr pdef, ppMatrix &M) {
 	}
 }
 
+void plan_slam::UpdateMap(ppMatrix Map, Vector upper_bound, Vector lower_bound) {
+
+	MD.Map = Map;
+	MD.UB = upper_bound;
+	MD.LB = lower_bound;
+}
+
 int plan_slam::AdvanceStepCamera(ppMatrix M) {
 
-	StateValidChecker svc;
+	StateValidChecker svc(MD);
 
 	int i = 0;
 	while (i < M.size() && svc.IsStateVisiblilty(M[i][0],M[i][1],M[i][2]))
@@ -192,7 +199,7 @@ bool plan_slam::plan(Vector q_start, Vector q_goal, double runtime, plannerType 
 	 // create a planner for the defined space
 	 // To add a planner, the #include library must be added above
 	 ob::PlannerPtr planner = allocatePlanner(si, p_type);
-	 //planner->update_map(mPts);
+
 	 // set the problem we are trying to solve for the planner
 	 planner->setProblemDefinition(pdef);
 

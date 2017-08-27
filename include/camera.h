@@ -16,20 +16,25 @@
 #include <time.h>
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include "MapPoint.h"
 //#include <system.h>
 
 #define THRES 20
+
+typedef struct {
+    	std::vector<std::vector<double>> Map;
+    	std::vector<double> UB;
+    	std::vector<double> LB;
+} map_data;
 
 using namespace std;
 
 class camera
 {
 public:
-    camera();
+    camera(map_data MD);
 
-    camera(std::string map_file, std::string upper_bound_file, std::string lower_bound_file);
-
-    camera(std::vector<MapPoint*> &vpPts);
+    camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts);
     
     std::vector<std::vector<float> > read_text(std::string points);
 
@@ -45,7 +50,7 @@ public:
 
     bool IsStateVisiblilty(float x_w, float y_w, float theta_rad_w);
 
-    void update_map(std::vector<MapPoint*> &vpPts)
+    void update_map(std::vector<ORB_SLAM2::MapPoint*> &vpPts);
 
 private:
 

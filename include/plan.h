@@ -98,6 +98,9 @@ public:
 		return Path;
 	}
 
+	/** Update camera model map */
+	void UpdateMap(ppMatrix, Vector, Vector);
+
 	/** Gets the furthest node (index) in the path that can be reached with the feature constraint imposed */
 	int AdvanceStepCamera(ppMatrix M);
 
@@ -105,6 +108,8 @@ private:
 	int n = 3;
 
 	ppMatrix Path;
+
+	map_data MD;
 
 };
 

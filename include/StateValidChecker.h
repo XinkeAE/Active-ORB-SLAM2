@@ -25,9 +25,6 @@ using namespace std;
 
 #define PI 3.1416
 
-#define MAP_FILE "../slam_planner/data/Corner_Map_S.txt"
-#define UB_FILE "../slam_planner/data/upper_bound.txt"
-#define LB_FILE "../slam_planner/data/lower_bound.txt"
 #define ROBOT_RADIUS 0.25
 #define TURN_RADIUS 0.25
 #define DT 0.2
@@ -50,10 +47,9 @@ typedef struct {
 class StateValidChecker : public collisionDetection, public camera
 {
 public:
-	StateValidChecker(const ob::SpaceInformationPtr &si) :
+	StateValidChecker(const ob::SpaceInformationPtr &si, map_data MD) :
 		mysi_(si.get()),
-		//camera(MAP_FILE, UB_FILE, LB_FILE),
-		camera(),
+		camera(MD),
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),
@@ -62,9 +58,8 @@ public:
 		StartState(3)
 	{};
 
-	StateValidChecker() :
-		//camera(MAP_FILE, UB_FILE, LB_FILE),
-		camera(),
+	StateValidChecker(map_data MD) :
+		camera(MD),
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),

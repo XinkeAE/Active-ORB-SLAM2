@@ -51,7 +51,7 @@
 
 #include "myRRTstar.h"
 
-ompl::geometric::RRTstar::RRTstar(const base::SpaceInformationPtr &si) :
+ompl::geometric::RRTstar::RRTstar(const base::SpaceInformationPtr &si, map_data MD) :
     base::Planner(si, "RRTstar"),
     goalBias_(0.05),
     maxDistance_(0.0),
@@ -73,7 +73,7 @@ ompl::geometric::RRTstar::RRTstar(const base::SpaceInformationPtr &si) :
     prunedCost_(std::numeric_limits<double>::quiet_NaN()),
     prunedMeasure_(0.0),
     iterations_(0u),
-	StateValidChecker(si)
+	StateValidChecker(si, MD)
 {
 
     defaultSettings(); // Avishai

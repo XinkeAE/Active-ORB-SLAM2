@@ -1,33 +1,8 @@
 #include "camera.h"
 
 
-camera::camera(){
 
-    fx = 520.49;
-    fy = 522.47;
-    cx = 474.95;
-    cy = 264.27;
-    MaxX = 940;
-    MinX = 20;
-    MaxY = 530;
-    MinY = 10;
-    max_dist = 3;
-    min_dist = 0.1;
-
-    feature_threshold = THRES;
-    T_sw<<0,   -1.0000,         0,    -0.1000,
-    0,         0,   -1.0000,         0,
-    1.0000,         0,         0,   -0.2500,
-    0,         0,        0,    1.0000;
-
-T_bc <<0 ,        0 ,   1.0000 ,   0.2500 ,
-      -1.0000 ,        0  ,       0 ,  -0.1000,
-      0 ,  -1.0000 ,        0  ,       0,
-      0 ,        0  ,       0   , 1.0000;
-
-}
-
-camera::camera(std::string map_file, std::string upper_bound_file, std::string lower_bound_file)
+camera::camera(map_data MD)
 {
 	std::cout << "Initializing camera data..." << std::endl;
 
@@ -45,11 +20,19 @@ camera::camera(std::string map_file, std::string upper_bound_file, std::string l
     feature_threshold = THRES;
 
     //load files Map
-    map_vec=read_text(map_file);
+    upper_bound.resize(MD.UB.size());
+    lower_bound.resize(MD.LB.size());
 
-    upper_bound=read_text_single_line(upper_bound_file);
+   vector<float> v_float_ub(MD.UB.begin(), MD.UB.end());
+   vector<float> v_float_lb(MD.LB.begin(), MD.LB.end());
 
-    lower_bound=read_text_single_line(lower_bound_file);
+   upper_bound = v_float_ub;
+   lower_bound = v_float_lb;
+
+   for (int i = 0; i < MD.Map.size(); i++) {
+      	vector<float> v_float(MD.Map[i].begin(), MD.Map[i].end());
+       	map_vec.push_back(v_float);
+   }   
 
     T_sw<<0,   -1.0000,         0,    -0.1000,
           0,         0,   -1.0000,         0,
@@ -64,7 +47,7 @@ camera::camera(std::string map_file, std::string upper_bound_file, std::string l
 }
 
 
-camera::camera(std::vector<MapPoint*> &vpPts)
+camera::camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
 {
 	std::cout << "Initializing camera data..." << std::endl;
 
@@ -245,7 +228,7 @@ std::vector<float>  camera::read_text_single_line(std::string filename)
 }
 
 
-void camera::update_map(std::vector<MapPoint*> &vpPts)
+void camera::update_map(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
 {
     if(!map_vec.empty())
     {
@@ -258,7 +241,7 @@ void camera::update_map(std::vector<MapPoint*> &vpPts)
     if(!vpPts.empty())
     {
         for(size_t i=0; i<vpPts.size(); i++){
-            MapPoint* pPt = vpPts[i];
+            ORB_SLAM2::MapPoint* pPt = vpPts[i];
     
             if(pPt->isBad())
                 continue;
@@ -271,7 +254,7 @@ void camera::update_map(std::vector<MapPoint*> &vpPts)
             one_pt.push_back(Pos.at<float>(0));
             one_pt.push_back(Pos.at<float>(1));
             one_pt.push_back(Pos.at<float>(2));
-            one_pt.push_back(1f);
+            one_pt.push_back(1.0f);
 
             map_vec.push_back(one_pt);
             float theta_mean=pPt->theta_mean;

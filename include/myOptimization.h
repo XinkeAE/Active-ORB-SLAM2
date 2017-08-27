@@ -38,8 +38,7 @@ using namespace ob;
 class LengthObjective : public ob::StateCostIntegralObjective, public StateValidChecker
 {
 public:
-	LengthObjective(const ob::SpaceInformationPtr& si) : ob::StateCostIntegralObjective(si, true), StateValidChecker(si) {cout << "Init custom objective function.\n";}
-
+    LengthObjective(const ob::SpaceInformationPtr& si, map_data MD) : ob::StateCostIntegralObjective(si, true), StateValidChecker(si, MD) {cout << "Init custom objective function.\n";}
     ob::Cost stateCost(const ob::State* s) const
     {
       	return identityCost();
@@ -67,8 +66,8 @@ public:
 class CameraObjective : public ob::StateCostIntegralObjective, public StateValidChecker
 {
 public:
-	CameraObjective(const ob::SpaceInformationPtr& si) : ob::StateCostIntegralObjective(si, true), StateValidChecker(si) {cout << "Init custom objective function.\n";}
-
+    CameraObjective(const ob::SpaceInformationPtr& si, map_data MD) : ob::StateCostIntegralObjective(si, true), StateValidChecker(si, MD) {cout << "Init custom objective function.\n";}
+    
     ob::Cost stateCost(const ob::State* s) const
     {
     	return identityCost();
