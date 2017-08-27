@@ -259,7 +259,11 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
 	// TODO: Change the arguments.
 	//mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
-
+	std::vector<std::vector<double>> planned_trajectory =
+		mpPlanner->GetPlanningTrajectory();
+	if (!planned_trajectory.empty()) {
+		// TODO: Handle the planned trajectory.
+	}
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;

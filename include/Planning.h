@@ -40,6 +40,8 @@ public:
 	void InsertKeyFrame(KeyFrame* pKF);
 	// Get all possibly visible MapPoints for a given pose.
 	std::set<MapPoint*> GetVisiblePoints(cv::Mat pose);
+	// Get planning trajectory.
+	std::vector<std::vector<double>> GetPlanningTrajectory();
 
 private:
 	// Check if the thread should stop.
@@ -68,9 +70,11 @@ private:
 	// current pose.
 	bool CheckHasRequest();
 	bool hasRequest;
+	void AckRequest();
 	KeyFrame* currKF;
 	cv::Mat currPose;
 	std::mutex mMutexRequest;
+	std::mutex mMutexTrajectory;
 
 	// Store the planned trajectory.
 	std::vector<std::vector<double>> current_trajectory;
