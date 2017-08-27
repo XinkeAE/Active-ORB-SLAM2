@@ -155,7 +155,13 @@ private:
     Tracking* mpTracker;
 
 	// Perform planning.
-	Planning* mpPlanner;
+    Planning* mpPlanner;
+    cv::Mat T_wb_initial_mat;
+    cv::Mat currPose;
+    float x = 0;
+    float y = 0;
+    bool Initialized = false;
+    size_t counter = 0;
 
     // Local Mapper. It manages the local map and performs local bundle adjustment.
     LocalMapping* mpLocalMapper;

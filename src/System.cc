@@ -132,8 +132,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
                              mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
                              
 	// Initialize the Planning thread
-	mpPlanner = new Planning(cv::Mat(), mpMap);
-	mptPlanning = new thread(&ORB_SLAM2::Planning::Run, mpPlanner);
+	//mpPlanner = new Planning(cv::Mat(), mpMap);
+	//mptPlanning = new thread(&ORB_SLAM2::Planning::Run, mpPlanner);
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
@@ -221,6 +221,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         exit(-1);
     }    
 
+    cout << __LINE__<< endl;
+
     // Check mode change
     {
         unique_lock<mutex> lock(mMutexMode);
@@ -245,6 +247,9 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         }
     }
 
+    cout << __LINE__<< endl;
+    
+
     // Check reset
     {
     unique_lock<mutex> lock(mMutexReset);
@@ -256,6 +261,43 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     }
 
     cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,timestamp);
+
+    cout << __LINE__<< endl;
+    
+    /*
+    cv::Mat T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
+                                                -1, 0, 0, -0.1, // -0.1,//-0.1,
+                                                0,-1, 0, 0,
+                                                0, 0, 0, 1);
+    cv::Mat T_cb_mat = (cv::Mat_<float>(4,4) << 0, -1, 0, -0.1, //-0.1,
+                                                0, 0, -1, 0,
+                                                1,0, 0, -0.22, //-0.22,
+                                                0, 0, 0, 1);
+
+    if(!Tcw.empty()){
+        cv::Mat T_wb_mat = cv::Mat(T_ws_mat*Tcw*T_cb_mat);
+        if(!Initialized){
+            T_wb_initial_mat = T_wb_mat.clone();
+            counter ++;
+            if(counter > 5)
+                Initialized = true;
+        }
+        
+        currPose = T_wb_initial_mat.inv()*T_wb_mat;
+        // cv::Rect(0,0,3,3)
+        // Eigen angle axis
+
+        float x = currPose.at<float>(0,3);
+        float y = currPose.at<float>(1,3);
+
+
+
+    }
+    */
+
+
+
+
 
 	// TODO: Change the arguments.
 	//mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
