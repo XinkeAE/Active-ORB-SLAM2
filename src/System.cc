@@ -264,16 +264,24 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     if (!currPose.empty()){
         x_curr = currPose.at<float>(0,3);
         y_curr = currPose.at<float>(1,3);
+
+        float dist = sqrt((x_curr - x_end)*(x_curr - x_end) + (y_curr - y_end)*(y_curr - y_end));
         
         // TODO: Change the arguments.
-        //mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
-        std::vector<std::vector<double>> planned_trajectory =
-            mpPlanner->GetPlanningTrajectory();
-        if (!planned_trajectory.empty()) {
-            // TODO: Handle the planned trajectory.
+        if(!hasPlannedTraj || (dist<0.5&&(x_end!=0)&&(y_end!=0))){
+            mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
+            hasPlannedTraj = true; 
+               
+            std::vector<std::vector<double>> planned_trajectory =
+                mpPlanner->GetPlanningTrajectory();
+            if (!planned_trajectory.empty()) {
+                // TODO: Handle the planned trajectory.
+                x_end = planned_trajectory.back()[1];
+                y_end = planned_trajectory.back()[2];
+            }
         }
     }
-    
+
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;

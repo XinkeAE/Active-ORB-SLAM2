@@ -56,6 +56,10 @@ private:
 
     // Map
 	Map* mpMap;
+	ppMatrix planningMap;
+	Vector UB;
+	Vector LB;
+	float theta_interval;
 	
 	// Start and goal
 	std::vector<double> q_start;

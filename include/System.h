@@ -138,6 +138,10 @@ public:
     // for planning
     float x_curr = 0;
     float y_curr = 0;
+    bool hasPlannedTraj = false;
+    float x_end = 0;
+    float y_end = 0;
+    //std::vector<std::vector<double>> planned_trajectory;
 
 private:
 

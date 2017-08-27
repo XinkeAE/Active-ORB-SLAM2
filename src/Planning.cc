@@ -23,15 +23,41 @@ void Planning::Run() {
         // Run planner when Tracking thread send request.
         if (CheckHasRequest()) {
             // Call Planner with currKF and currPose.
+            cout << "in planning loop" << endl;
+            planningMap.clear();
+            UB.clear();
+            LB.clear();
 
             // update map here
             // 1. access to the map
             // 2. get the map points 
             // 3. compute the Upper bound, the lower bound
-            // ppMatrix Map = 
-            // Vector UB = 
-            // Vector LB = 
-            //pl->UpdateMap(Map, UB, LB);
+            {
+                unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+                vector<MapPoint*> vpPts = mpMap->GetAllMapPoints();
+                cout << "totally " << vpPts.size() << " points." << endl;
+                for(size_t i=0; i<vpPts.size(); i++){
+                    if(vpPts[i]->isBad())
+                        continue;
+                    
+                    planningMap.push_back(std::vector<double>{vpPts[i]->GetWorldPos().at<float>(0),
+                                                             vpPts[i]->GetWorldPos().at<float>(1),
+                                                             vpPts[i]->GetWorldPos().at<float>(2)});
+
+                    if(vpPts[i]->theta_std * 3 < 15.0/57.3){
+                        theta_interval = 15.0/57.3;
+                    }else{
+                        theta_interval = vpPts[i]->theta_std * 3;
+                    }
+
+                    UB.push_back(double(vpPts[i]->theta_mean + theta_interval));
+                    LB.push_back(double(vpPts[i]->theta_mean - theta_interval));
+                }
+            }
+
+            std::cout << planningMap.size() << std::endl;
+
+            pl->UpdateMap(planningMap, UB, LB);
 
             // do actual planning
             pl->plan(q_start, q_goal, 2, p_type, o_type);
