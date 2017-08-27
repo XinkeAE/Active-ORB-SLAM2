@@ -239,6 +239,24 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 
     Track();
 
+    // compute the pose in the body frame
+    if(!mCurrentFrame.mTcw.empty()){
+        cv::Mat Tsc = mCurrentFrame.mTcw.clone().inv();
+        cv::Mat T_wb_mat = cv::Mat(T_ws_mat*Tsc*T_cb_mat);
+        if(!TwbInitialized){
+            T_wb_initial_mat = T_wb_mat.clone();
+            TwbCounter ++;
+            if(TwbCounter > 5)
+                TwbInitialized = true;
+        }
+        
+        currPose = T_wb_initial_mat.inv()*T_wb_mat;
+        // cv::Rect(0,0,3,3)
+        // Eigen angle axis
+
+    }
+
+
     return mCurrentFrame.mTcw.clone();
 }
 

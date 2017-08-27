@@ -132,6 +132,23 @@ public:
 
     void Reset();
 
+    // For planning compute the pose in the world frame
+    cv::Mat T_wb_initial_mat;
+    cv::Mat currPose;
+
+    cv::Mat T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
+                                                -1, 0, 0, -0.1, // -0.1,//-0.1,
+                                                0,-1, 0, 0,
+                                                0, 0, 0, 1);
+
+    cv::Mat T_cb_mat = (cv::Mat_<float>(4,4) << 0, -1, 0, -0.1, //-0.1,
+                                                0, 0, -1, 0,
+                                                1,0, 0, -0.22, //-0.22,
+                                                0, 0, 0, 1);
+    
+    bool TwbInitialized = false;
+    size_t TwbCounter = 0;
+    
 protected:
 
     // Main tracking function. It is independent of the input sensor.

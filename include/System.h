@@ -135,6 +135,10 @@ public:
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
+    // for planning
+    float x_curr = 0;
+    float y_curr = 0;
+
 private:
 
     // Input sensor
@@ -156,12 +160,6 @@ private:
 
 	// Perform planning.
     Planning* mpPlanner;
-    cv::Mat T_wb_initial_mat;
-    cv::Mat currPose;
-    float x = 0;
-    float y = 0;
-    bool Initialized = false;
-    size_t counter = 0;
 
     // Local Mapper. It manages the local map and performs local bundle adjustment.
     LocalMapping* mpLocalMapper;

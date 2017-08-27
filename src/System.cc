@@ -78,7 +78,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
        cerr << "Failed to open settings file at: " << strSettingsFile << endl;
        exit(-1);
     }
-
+    
 
     //Load ORB Vocabulary
     cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
@@ -132,8 +132,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
                              mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
                              
 	// Initialize the Planning thread
-	//mpPlanner = new Planning(cv::Mat(), mpMap);
-	//mptPlanning = new thread(&ORB_SLAM2::Planning::Run, mpPlanner);
+	mpPlanner = new Planning(cv::Mat(), mpMap);
+	mptPlanning = new thread(&ORB_SLAM2::Planning::Run, mpPlanner);
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
@@ -221,8 +221,6 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         exit(-1);
     }    
 
-    cout << __LINE__<< endl;
-
     // Check mode change
     {
         unique_lock<mutex> lock(mMutexMode);
@@ -246,8 +244,6 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             mbDeactivateLocalizationMode = false;
         }
     }
-
-    cout << __LINE__<< endl;
     
 
     // Check reset
@@ -262,50 +258,22 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
     cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,timestamp);
 
-    cout << __LINE__<< endl;
-    
-    /*
-    cv::Mat T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
-                                                -1, 0, 0, -0.1, // -0.1,//-0.1,
-                                                0,-1, 0, 0,
-                                                0, 0, 0, 1);
-    cv::Mat T_cb_mat = (cv::Mat_<float>(4,4) << 0, -1, 0, -0.1, //-0.1,
-                                                0, 0, -1, 0,
-                                                1,0, 0, -0.22, //-0.22,
-                                                0, 0, 0, 1);
+    // Request planning
+    cv::Mat currPose = mpTracker->currPose.clone();
 
-    if(!Tcw.empty()){
-        cv::Mat T_wb_mat = cv::Mat(T_ws_mat*Tcw*T_cb_mat);
-        if(!Initialized){
-            T_wb_initial_mat = T_wb_mat.clone();
-            counter ++;
-            if(counter > 5)
-                Initialized = true;
-        }
+    if (!currPose.empty()){
+        x_curr = currPose.at<float>(0,3);
+        y_curr = currPose.at<float>(1,3);
         
-        currPose = T_wb_initial_mat.inv()*T_wb_mat;
-        // cv::Rect(0,0,3,3)
-        // Eigen angle axis
-
-        float x = currPose.at<float>(0,3);
-        float y = currPose.at<float>(1,3);
-
-
-
+        // TODO: Change the arguments.
+        //mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
+        std::vector<std::vector<double>> planned_trajectory =
+            mpPlanner->GetPlanningTrajectory();
+        if (!planned_trajectory.empty()) {
+            // TODO: Handle the planned trajectory.
+        }
     }
-    */
-
-
-
-
-
-	// TODO: Change the arguments.
-	//mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
-	std::vector<std::vector<double>> planned_trajectory =
-		mpPlanner->GetPlanningTrajectory();
-	if (!planned_trajectory.empty()) {
-		// TODO: Handle the planned trajectory.
-	}
+    
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
