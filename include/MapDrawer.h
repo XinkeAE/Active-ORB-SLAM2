@@ -44,9 +44,12 @@ public:
     void SetCurrentCameraPose(const cv::Mat &Tcw);
     void SetReferenceKeyFrame(KeyFrame *pKF);
     void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M);
+    void SetCurrentPath(const std::vector<std::vector<float>> &bPath);
+    void DrawPath(const bool bDrawPath);
+
 
 private:
-
+    std::vector<std::vector<float>> mPath;
     float mKeyFrameSize;
     float mKeyFrameLineWidth;
     float mGraphLineWidth;
@@ -56,7 +59,18 @@ private:
 
     cv::Mat mCameraPose;
 
+    cv::Mat T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
+                        -1, 0, 0, -0.1, // -0.1,//-0.1,
+                        0,-1, 0, 0,
+                        0, 0, 0, 1);
+
+    cv::Mat T_cb_mat = (cv::Mat_<float>(4,4) << 0, -1, 0, -0.1, //-0.1,
+                        0, 0, -1, 0,
+                        1,0, 0, -0.22, //-0.22,
+                        0, 0, 0, 1);
     std::mutex mMutexCamera;
+
+    std::mutex mMutexPath;
 };
 
 } //namespace ORB_SLAM
