@@ -148,6 +148,7 @@ public:
     
     bool TwbInitialized = false;
     size_t TwbCounter = 0;
+    std::vector<std::vector<double>> planned_trajectory;
     
 protected:
 

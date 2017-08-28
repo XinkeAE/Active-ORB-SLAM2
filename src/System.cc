@@ -266,19 +266,23 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         y_curr = currPose.at<float>(1,3);
 
         float dist = sqrt((x_curr - x_end)*(x_curr - x_end) + (y_curr - y_end)*(y_curr - y_end));
-        
+
+        //std::cout << "distance = " << dist << std::endl;     
         // TODO: Change the arguments.
+        // At the beginning we plan, once the robot approach the end of trajectory list, replan
         if(!hasPlannedTraj || (dist<0.5&&(x_end!=0)&&(y_end!=0))){
             mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
             hasPlannedTraj = true; 
-               
-            std::vector<std::vector<double>> planned_trajectory =
-                mpPlanner->GetPlanningTrajectory();
-            if (!planned_trajectory.empty()) {
-                // TODO: Handle the planned trajectory.
-                x_end = planned_trajectory.back()[1];
-                y_end = planned_trajectory.back()[2];
-            }
+        }
+        std::vector<std::vector<double>> planned_trajectory =
+        mpPlanner->GetPlanningTrajectory();
+        //cout << " way points number " << planned_trajectory.size() << endl;
+        if (!planned_trajectory.empty()) {
+            // TODO: Handle the planned trajectory.
+            x_end = planned_trajectory.back()[0];
+            y_end = planned_trajectory.back()[1];
+            //cout << "x_end = " << x_end << ", y_end = " << y_end << endl; 
+            mpTracker->planned_trajectory = planned_trajectory;
         }
     }
 

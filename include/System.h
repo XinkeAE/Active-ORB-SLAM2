@@ -141,7 +141,6 @@ public:
     bool hasPlannedTraj = false;
     float x_end = 0;
     float y_end = 0;
-    //std::vector<std::vector<double>> planned_trajectory;
 
 private:
 

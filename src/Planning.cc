@@ -68,12 +68,16 @@ void Planning::Run() {
 
             // check the point when the visibility constrain is not satisfied
             int nxt_start = pl->AdvanceStepCamera(current_trajectory);
-            q_start = current_trajectory[nxt_start];
 
-            // Set planned trajectory.
-            unique_lock<mutex> trajectory_lock(mMutexTrajectory);
-            planned_trajectory.insert(planned_trajectory.end(), current_trajectory.begin(), current_trajectory.begin()+nxt_start);
-            trajectory_lock.unlock();
+            if(nxt_start>-1){
+                q_start = current_trajectory[nxt_start];
+                
+                // Set planned trajectory.
+                unique_lock<mutex> trajectory_lock(mMutexTrajectory);
+                planned_trajectory.insert(planned_trajectory.end(), current_trajectory.begin(), current_trajectory.begin()+nxt_start);
+                trajectory_lock.unlock();
+            }
+
             // Ack the request.
             AckRequest();
         }
@@ -91,12 +95,13 @@ void Planning::SendPlanningRequest(cv::Mat pose, KeyFrame* kf) {
 std::vector<std::vector<double>> Planning::GetPlanningTrajectory() {
     unique_lock<mutex> lock(mMutexTrajectory);
     std::vector<std::vector<double>> trajectory_copy = planned_trajectory;
+    //std::cout << " way points number " << planned_trajectory.size() << std::endl;
     return trajectory_copy;
 }
 
 void Planning::AckRequest() {
     unique_lock<mutex> lock(mMutexRequest);
-    planned_trajectory.clear(); 
+    //planned_trajectory.clear(); 
     hasRequest = false;
 }
 
