@@ -111,9 +111,9 @@ int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
     return num_visible;
 }
 
-bool camera::IsStateVisiblilty(float x_w, float y_w, float theta_rad_w) {
+bool camera::IsStateVisiblilty(double x_w, double y_w, double theta_rad_w) {
 
-	return countVisible(x_w, y_w, theta_rad_w) > feature_threshold;
+	return countVisible((float)x_w, (float)y_w, (float)theta_rad_w) > feature_threshold;
 }
 
 
