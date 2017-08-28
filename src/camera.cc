@@ -121,6 +121,7 @@ bool camera::isInFrustum(std::vector<float> MapPoint_s, float upper_limit, float
     
         //convert map points into carmera frame
         Eigen::Matrix<float, 4, 1> map_point_s(MapPoint_s.data());
+        map_point_s(3,0) = 1;
         Eigen::Matrix<float, 4, 1> map_point_c=T_cs*map_point_s; 
 
         float PcX = map_point_c(0,0);
