@@ -58,7 +58,7 @@ private:
 	ppMatrix Obs;
 	double obs_r = 0.05; // Assumed point obstacle radius
 
-	string path_file = "../slam_planner/data/obs.txt";
+	string path_file = "./data/obs.txt";
 
 	int num_of_obs;
 
