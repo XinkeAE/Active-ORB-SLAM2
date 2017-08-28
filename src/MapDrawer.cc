@@ -239,6 +239,7 @@ void MapDrawer::DrawPath()
     const float z = w*0.6;
 
     unique_lock<mutex> lock(mMutexPath);
+    cv::Mat T_sc_prev;
 
     for(size_t i=0; i<mPath.size(); i++)
     {
@@ -281,8 +282,18 @@ void MapDrawer::DrawPath()
         glEnd();
 
         glPopMatrix();
-    }
     
+        if(i!=0)
+        {
+            glLineWidth(mKeyFrameLineWidth);
+            glColor3f(0.5f,0.0f,0.5f);
+            glBegin(GL_LINES);
+                glVertex3f(T_sc_prev.at<float>(3,0),T_sc_prev.at<float>(3,1),T_sc_prev.at<float>(3,2));
+                glVertex3f(T_sc.at<float>(3,0),T_sc.at<float>(3,1),T_sc.at<float>(3,2));
+            glEnd();
+        }
+        T_sc_prev=T_sc;
+    }
 }
 
 
