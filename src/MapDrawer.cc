@@ -23,6 +23,7 @@
 #include "KeyFrame.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
+#include <math>
 
 namespace ORB_SLAM2
 {
@@ -224,6 +225,66 @@ void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw)
     unique_lock<mutex> lock(mMutexCamera);
     mCameraPose = Tcw.clone();
 }
+
+void MapDrawer::SetCurrentPath(const std::vector<std::vector<float>> &bPath)
+{
+    unique_lock<mutex> lock(mMutexPath);
+    mPath=bPath;
+}
+
+void DrawPath()
+{
+    const float &w = mKeyFrameSize;
+    const float h = w*0.75;
+    const float z = w*0.6;
+   
+    for(size_t i=0; i<mPath.size(); i++)
+    {
+        //KeyFrame* pKF = vpKFs[i];
+        std::vector<float> node=mPath[i];
+
+        cv::Mat T_wb= (cv::Mat_<float>(4,4)<< cos(node[2]), -sin(node[2]),0,node[0],
+                                            sin(node[2]),cos(node[2]), 0, node[1],
+                                            0 , 0, 1 ,0,
+                                            0,  0,  0,  1);
+
+        cv::Mat T_sc=(T_ws_mat.inv())*T_wb*(T_cb_mat.inv());
+
+        glPushMatrix();
+
+        glMultMatrixf(T_sc.ptr<GLfloat>(0));
+
+        glLineWidth(mKeyFrameLineWidth);
+        glColor3f(1.0f,0.0f,1.0f);
+        glBegin(GL_LINES);
+        glVertex3f(0,0,0);
+        glVertex3f(w,h,z);
+        glVertex3f(0,0,0);
+        glVertex3f(w,-h,z);
+        glVertex3f(0,0,0);
+        glVertex3f(-w,-h,z);
+        glVertex3f(0,0,0);
+        glVertex3f(-w,h,z);
+
+        glVertex3f(w,h,z);
+        glVertex3f(w,-h,z);
+
+        glVertex3f(-w,h,z);
+        glVertex3f(-w,-h,z);
+
+        glVertex3f(-w,h,z);
+        glVertex3f(w,h,z);
+
+        glVertex3f(-w,-h,z);
+        glVertex3f(w,-h,z);
+        glEnd();
+
+        glPopMatrix();
+    }
+    
+}
+
+
 
 void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M)
 {
