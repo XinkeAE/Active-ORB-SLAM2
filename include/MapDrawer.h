@@ -44,12 +44,12 @@ public:
     void SetCurrentCameraPose(const cv::Mat &Tcw);
     void SetReferenceKeyFrame(KeyFrame *pKF);
     void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M);
-    void SetCurrentPath(const std::vector<std::vector<float>> &bPath);
-    void DrawPath(const bool bDrawPath);
+    void SetCurrentPath(const std::vector<std::vector<double>> &bPath);
+    void DrawPath();
 
 
 private:
-    std::vector<std::vector<float>> mPath;
+    std::vector<std::vector<double>> mPath;
     float mKeyFrameSize;
     float mKeyFrameLineWidth;
     float mGraphLineWidth;

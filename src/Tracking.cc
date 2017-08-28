@@ -462,6 +462,7 @@ void Tracking::Track()
                 mVelocity = cv::Mat();
 
             mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+            mpMapDrawer->SetCurrentPath(planned_trajectory);
 
             // Clean VO matches
             for(int i=0; i<mCurrentFrame.N; i++)

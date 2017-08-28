@@ -23,7 +23,7 @@
 #include "KeyFrame.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
-#include <math>
+#include <math.h>
 
 namespace ORB_SLAM2
 {
@@ -226,29 +226,28 @@ void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw)
     mCameraPose = Tcw.clone();
 }
 
-void MapDrawer::SetCurrentPath(const std::vector<std::vector<float>> &bPath)
+void MapDrawer::SetCurrentPath(const std::vector<std::vector<double>> &bPath)
 {
     unique_lock<mutex> lock(mMutexPath);
     mPath=bPath;
 }
 
-void DrawPath()
+void MapDrawer::DrawPath()
 {
     const float &w = mKeyFrameSize;
     const float h = w*0.75;
     const float z = w*0.6;
-   
+
     for(size_t i=0; i<mPath.size(); i++)
     {
-        //KeyFrame* pKF = vpKFs[i];
-        std::vector<float> node=mPath[i];
+        std::vector<float> node= {float(mPath[i][0]),float(mPath[i][1]),float(mPath[i][2])};
 
         cv::Mat T_wb= (cv::Mat_<float>(4,4)<< cos(node[2]), -sin(node[2]),0,node[0],
                                             sin(node[2]),cos(node[2]), 0, node[1],
                                             0 , 0, 1 ,0,
                                             0,  0,  0,  1);
 
-        cv::Mat T_sc=(T_ws_mat.inv())*T_wb*(T_cb_mat.inv());
+        cv::Mat T_sc=((T_ws_mat.inv())*T_wb*(T_cb_mat.inv())).t();
 
         glPushMatrix();
 
