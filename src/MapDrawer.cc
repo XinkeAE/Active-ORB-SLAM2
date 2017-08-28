@@ -238,6 +238,8 @@ void MapDrawer::DrawPath()
     const float h = w*0.75;
     const float z = w*0.6;
 
+    unique_lock<mutex> lock(mMutexPath);
+
     for(size_t i=0; i<mPath.size(); i++)
     {
         std::vector<float> node= {float(mPath[i][0]),float(mPath[i][1]),float(mPath[i][2])};
