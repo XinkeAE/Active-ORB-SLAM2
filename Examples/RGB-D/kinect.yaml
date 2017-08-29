@@ -75,7 +75,7 @@ Viewer.PointSize:2
 Viewer.CameraSize: 0.08
 Viewer.CameraLineWidth: 3
 Viewer.ViewpointX: 0
-Viewer.ViewpointY: -500.0
+Viewer.ViewpointY: -300.0
 Viewer.ViewpointZ: -0.1
 Viewer.ViewpointF: 50000
 
