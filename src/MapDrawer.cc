@@ -265,7 +265,7 @@ void MapDrawer::DrawPath()
             glMultMatrixf(T_sc.ptr<GLfloat>(0));
 
             glLineWidth(mKeyFrameLineWidth);
-            glColor3f(1.0f,1.0f,1.0f);
+            glColor3f(0.0f,0.0f,0.0f);
             glBegin(GL_LINES);
             glVertex3f(0,0,0);
             glVertex3f(w,h,z);
@@ -318,7 +318,7 @@ void MapDrawer::DrawPath()
 
         glMultMatrixf(T_sc.ptr<GLfloat>(0));
 
-        glLineWidth(mKeyFrameLineWidth);
+        glLineWidth(mKeyFrameLineWidth*2);
         glColor3f(1.0f,0.0f,0.0f);
         glBegin(GL_LINES);
         glVertex3f(0,0,0);
@@ -348,10 +348,19 @@ void MapDrawer::DrawPath()
         if(counter!=0)
         {
             glLineWidth(mKeyFrameLineWidth);
-            glColor3f(1.0f,1.0f,1.0f);
+            glColor3f(0.0f,1.0f,0.0f);
             glBegin(GL_LINES);
                 glVertex3f(T_sc_prev.at<float>(3,0),T_sc_prev.at<float>(3,1),T_sc_prev.at<float>(3,2));
                 glVertex3f(T_sc.at<float>(3,0),T_sc.at<float>(3,1),T_sc.at<float>(3,2));
+            glEnd();
+
+            glBegin(GL_LINE_LOOP);
+            for(int ii = 0; ii < 300; ii++) 
+            { 
+                float theta = 2.0f * 3.1415926f * float(ii) / float(300);//get the current angle 
+                glVertex3f( 0.12 * sinf(theta)+T_sc.at<float>(3,0), T_sc.at<float>(3,1), 0.12 * cosf(theta)+T_sc.at<float>(3,2));//output vertex 
+        
+            } 
             glEnd();
         }
         T_sc_prev=T_sc;
@@ -372,7 +381,7 @@ void MapDrawer::DrawPath()
             glMultMatrixf(T_sc.ptr<GLfloat>(0));
 
             glLineWidth(mKeyFrameLineWidth);
-            glColor3f(1.0f,1.0f,1.0f);
+            glColor3f(1.0f,0.8f,0.35f);
             glBegin(GL_LINES);
             glVertex3f(0,0,0);
             glVertex3f(w,h,z);
@@ -401,16 +410,21 @@ void MapDrawer::DrawPath()
             if(i!=0)
             {
                 glLineWidth(mKeyFrameLineWidth);
-                glColor3f(0.5f,0.0f,0.5f);
+                glPushAttrib(GL_ENABLE_BIT); 
+                glLineStipple(1, 0xAAAA); 
+                glEnable(GL_LINE_STIPPLE);
+                glColor3f(0.5f,0.5f,0.5f);
                 glBegin(GL_LINES);
                     glVertex3f(T_sc_prev.at<float>(3,0),T_sc_prev.at<float>(3,1),T_sc_prev.at<float>(3,2));
                     glVertex3f(T_sc.at<float>(3,0),T_sc.at<float>(3,1),T_sc.at<float>(3,2));
                 glEnd();
+                glPopAttrib();
+
+                 
+                 
             }
             T_sc_prev=T_sc;
         }
-
-
     }
 }
 
