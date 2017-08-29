@@ -102,6 +102,8 @@ public:
     // Current Frame
     Frame mCurrentFrame;
     cv::Mat mImGray;
+    
+    
 
     // Initialization Variables (Monocular)
     std::vector<int> mvIniLastMatches;
@@ -149,6 +151,9 @@ public:
     bool TwbInitialized = false;
     size_t TwbCounter = 0;
     std::vector<std::vector<double>> planned_trajectory;
+    std::vector<double> curr_des;
+    int path_it_counter=1;
+    
     
 protected:
 

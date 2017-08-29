@@ -55,7 +55,7 @@ void Planning::Run() {
                 }
             }
 
-            std::cout << planningMap.size() << std::endl;
+            //std::cout << planningMap.size() << std::endl;
 
             pl->UpdateMap(planningMap, UB, LB);
 

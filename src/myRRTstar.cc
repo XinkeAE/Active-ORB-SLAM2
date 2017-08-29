@@ -1211,7 +1211,7 @@ ppMatrix ompl::geometric::RRTstar::save2file(vector<Motion*> mpath) {
                 M[k][2] = fix_rot_angle(M[k][2]);
 				for (int j = 0; j<M[k].size(); j++) {
                     myfile << M[k][j] << " ";
-                    cout << M[k][j] << " ";
+                    //cout << M[k][j] << " ";
 				}
                 myfile << endl;
 				count++;
