@@ -35,6 +35,7 @@
 #include"../../../include/System.h"
 
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose2D.h>
 #include <tf/transform_broadcaster.h>
 
 // octomap 
@@ -54,7 +55,7 @@ using namespace std;
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub, ros::Publisher octoPub):mpSLAM(pSLAM),posePublisher(posePub),octomapPublisher(octoPub){
+    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub, ros::Publisher octoPub, ros::Publisher destPub):mpSLAM(pSLAM),posePublisher(posePub),octomapPublisher(octoPub),currDestPublisher(destPub){
         T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
                                                -1, 0, 0, -0.1, // -0.1,//-0.1,
                                                 0,-1, 0, 0,
@@ -95,8 +96,10 @@ public:
     ORB_SLAM2::System* mpSLAM;
     geometry_msgs::PoseStamped pose_out_;
     octomap_msgs::Octomap octomap_out_;
+    geometry_msgs::Pose2D dest_out_;
     ros::Publisher posePublisher; 
     ros::Publisher octomapPublisher;
+    ros::Publisher currDestPublisher;
 };
 
 int main(int argc, char **argv)
@@ -126,8 +129,9 @@ int main(int argc, char **argv)
 
     ros::Publisher pose_pub = nh.advertise<geometry_msgs::PoseStamped> ( "/orb/pose_est", 2 );
     ros::Publisher octo_pub = nh.advertise<octomap_msgs::Octomap>( "octomap_3d", 1 );
+    ros::Publisher dest_pub = nh.advertise<geometry_msgs::Pose2D> ("planning/data", 1);
 
-    ImageGrabber igb(&SLAM, pose_pub, octo_pub);
+    ImageGrabber igb(&SLAM, pose_pub, octo_pub, dest_pub);
 
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
 
@@ -269,8 +273,21 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         
         }*/
 
-        if(initialized)
+        if(initialized){
             posePublisher.publish(pose_out_);
+
+            std::vector<double> curr_dest = mpSLAM->getCurrWaypoint();
+
+            if(curr_dest.size() > 0){
+                dest_out_.x = float(curr_dest[0]);
+                dest_out_.y = float(curr_dest[1]);
+                dest_out_.theta = float(curr_dest[2]);
+
+                currDestPublisher.publish(dest_out_);
+            }
+
+        }
+            
 
     }
 
