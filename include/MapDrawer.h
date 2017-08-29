@@ -46,6 +46,9 @@ public:
     void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M);
     void SetCurrentPath(const std::vector<std::vector<double>> &bPath);
     void DrawPath();
+    void SetCurrentCounter(int counter);
+    
+
 
 
 private:
@@ -56,6 +59,8 @@ private:
     float mPointSize;
     float mCameraSize;
     float mCameraLineWidth;
+
+    int currPathCounter=0;
 
     cv::Mat mCameraPose;
 
@@ -71,6 +76,8 @@ private:
     std::mutex mMutexCamera;
 
     std::mutex mMutexPath;
+
+    std::mutex mMutexCounter;
 };
 
 } //namespace ORB_SLAM

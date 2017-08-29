@@ -741,4 +741,9 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
     return mTrackedKeyPointsUn;
 }
 
+std::vector<double> System::getCurrWaypoint()
+{
+    return mpTracker->curr_des;
+}
+
 } //namespace ORB_SLAM

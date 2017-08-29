@@ -153,6 +153,9 @@ public:
     std::vector<std::vector<double>> planned_trajectory;
     std::vector<double> curr_des;
     int path_it_counter=1;
+
+    bool checkWayPoint();
+    
     
     
 protected:

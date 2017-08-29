@@ -143,6 +143,8 @@ public:
     float x_end = 0;
     float y_end = 0;
 
+    std::vector<double> getCurrWaypoint();
+
 private:
 
     // Input sensor

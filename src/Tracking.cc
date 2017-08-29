@@ -251,6 +251,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         }
         
         currPose = T_wb_initial_mat.inv()*T_wb_mat;
+        checkWayPoint();
         // cv::Rect(0,0,3,3)
         // Eigen angle axis
 
@@ -463,6 +464,7 @@ void Tracking::Track()
 
             mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
             mpMapDrawer->SetCurrentPath(planned_trajectory);
+            mpMapDrawer->SetCurrentCounter(path_it_counter);
 
             // Clean VO matches
             for(int i=0; i<mCurrentFrame.N; i++)
@@ -1637,6 +1639,29 @@ void Tracking::ChangeCalibration(const string &strSettingPath)
 void Tracking::InformOnlyTracking(const bool &flag)
 {
     mbOnlyTracking = flag;
+}
+
+bool Tracking::checkWayPoint()
+{
+    float x=currPose.at<float>(0,3);
+    float y=currPose.at<float>(1,3);
+    if(path_it_counter<planned_trajectory.size()){
+        if(curr_des.empty())
+            curr_des=planned_trajectory[path_it_counter];
+
+        if(path_it_counter<(planned_trajectory.size()-1))
+        {
+            double distance=(curr_des[0]-x)*(curr_des[0]-x)+(curr_des[1]-y)*(curr_des[1]-y);
+            if(distance<(0.12*0.12))
+            {
+                path_it_counter++;
+                curr_des=planned_trajectory[path_it_counter];
+                return true;
+            }
+        }
+    }
+    return false;
+
 }
 
 

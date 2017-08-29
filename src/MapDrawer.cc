@@ -237,14 +237,76 @@ void MapDrawer::DrawPath()
     const float &w = mKeyFrameSize;
     const float h = w*0.75;
     const float z = w*0.6;
-
+    int counter=0;
+    {
+        unique_lock<mutex> lock(mMutexCounter);
+        counter=currPathCounter;
+        //std::cout<<counter<<std::endl;
+    }
+    //std::cout<<counter<<std::endl;
     unique_lock<mutex> lock(mMutexPath);
     cv::Mat T_sc_prev;
+    //std::cout<<__LINE__<<std::endl;
+    //std::cout<<(0<counter)<<std::endl;
+    if(!mPath.empty()){
+        for(int i=0; i<counter; i++)
+        {
+            std::vector<float> node= {float(mPath[i][0]),float(mPath[i][1]),float(mPath[i][2])};
 
-    for(size_t i=0; i<mPath.size(); i++)
-    {
-        std::vector<float> node= {float(mPath[i][0]),float(mPath[i][1]),float(mPath[i][2])};
+            cv::Mat T_wb= (cv::Mat_<float>(4,4)<< cos(node[2]), -sin(node[2]),0,node[0],
+                                                sin(node[2]),cos(node[2]), 0, node[1],
+                                                0 , 0, 1 ,0,
+                                                0,  0,  0,  1);
 
+            cv::Mat T_sc=((T_ws_mat.inv())*T_wb*(T_cb_mat.inv())).t();
+
+            glPushMatrix();
+
+            glMultMatrixf(T_sc.ptr<GLfloat>(0));
+
+            glLineWidth(mKeyFrameLineWidth);
+            glColor3f(1.0f,1.0f,1.0f);
+            glBegin(GL_LINES);
+            glVertex3f(0,0,0);
+            glVertex3f(w,h,z);
+            glVertex3f(0,0,0);
+            glVertex3f(w,-h,z);
+            glVertex3f(0,0,0);
+            glVertex3f(-w,-h,z);
+            glVertex3f(0,0,0);
+            glVertex3f(-w,h,z);
+
+            glVertex3f(w,h,z);
+            glVertex3f(w,-h,z);
+
+            glVertex3f(-w,h,z);
+            glVertex3f(-w,-h,z);
+
+            glVertex3f(-w,h,z);
+            glVertex3f(w,h,z);
+
+            glVertex3f(-w,-h,z);
+            glVertex3f(w,-h,z);
+            glEnd();
+
+            glPopMatrix();
+        
+            if(i!=0)
+            {
+                glLineWidth(mKeyFrameLineWidth);
+                glColor3f(0.5f,0.0f,0.5f);
+                glBegin(GL_LINES);
+                    glVertex3f(T_sc_prev.at<float>(3,0),T_sc_prev.at<float>(3,1),T_sc_prev.at<float>(3,2));
+                    glVertex3f(T_sc.at<float>(3,0),T_sc.at<float>(3,1),T_sc.at<float>(3,2));
+                glEnd();
+            }
+            T_sc_prev=T_sc;
+        }
+
+        // plot current goal
+
+        std::vector<float> node= {float(mPath[counter][0]),float(mPath[counter][1]),float(mPath[counter][2])};
+        
         cv::Mat T_wb= (cv::Mat_<float>(4,4)<< cos(node[2]), -sin(node[2]),0,node[0],
                                             sin(node[2]),cos(node[2]), 0, node[1],
                                             0 , 0, 1 ,0,
@@ -257,7 +319,7 @@ void MapDrawer::DrawPath()
         glMultMatrixf(T_sc.ptr<GLfloat>(0));
 
         glLineWidth(mKeyFrameLineWidth);
-        glColor3f(1.0f,0.0f,1.0f);
+        glColor3f(1.0f,0.0f,0.0f);
         glBegin(GL_LINES);
         glVertex3f(0,0,0);
         glVertex3f(w,h,z);
@@ -283,16 +345,72 @@ void MapDrawer::DrawPath()
 
         glPopMatrix();
     
-        if(i!=0)
+        if(counter!=0)
         {
             glLineWidth(mKeyFrameLineWidth);
-            glColor3f(0.5f,0.0f,0.5f);
+            glColor3f(1.0f,1.0f,1.0f);
             glBegin(GL_LINES);
                 glVertex3f(T_sc_prev.at<float>(3,0),T_sc_prev.at<float>(3,1),T_sc_prev.at<float>(3,2));
                 glVertex3f(T_sc.at<float>(3,0),T_sc.at<float>(3,1),T_sc.at<float>(3,2));
             glEnd();
         }
         T_sc_prev=T_sc;
+
+        for(int i=counter+1; i<mPath.size(); i++)
+        {
+            std::vector<float> node= {float(mPath[i][0]),float(mPath[i][1]),float(mPath[i][2])};
+
+            cv::Mat T_wb= (cv::Mat_<float>(4,4)<< cos(node[2]), -sin(node[2]),0,node[0],
+                                                sin(node[2]),cos(node[2]), 0, node[1],
+                                                0 , 0, 1 ,0,
+                                                0,  0,  0,  1);
+
+            cv::Mat T_sc=((T_ws_mat.inv())*T_wb*(T_cb_mat.inv())).t();
+
+            glPushMatrix();
+
+            glMultMatrixf(T_sc.ptr<GLfloat>(0));
+
+            glLineWidth(mKeyFrameLineWidth);
+            glColor3f(1.0f,1.0f,1.0f);
+            glBegin(GL_LINES);
+            glVertex3f(0,0,0);
+            glVertex3f(w,h,z);
+            glVertex3f(0,0,0);
+            glVertex3f(w,-h,z);
+            glVertex3f(0,0,0);
+            glVertex3f(-w,-h,z);
+            glVertex3f(0,0,0);
+            glVertex3f(-w,h,z);
+
+            glVertex3f(w,h,z);
+            glVertex3f(w,-h,z);
+
+            glVertex3f(-w,h,z);
+            glVertex3f(-w,-h,z);
+
+            glVertex3f(-w,h,z);
+            glVertex3f(w,h,z);
+
+            glVertex3f(-w,-h,z);
+            glVertex3f(w,-h,z);
+            glEnd();
+
+            glPopMatrix();
+        
+            if(i!=0)
+            {
+                glLineWidth(mKeyFrameLineWidth);
+                glColor3f(0.5f,0.0f,0.5f);
+                glBegin(GL_LINES);
+                    glVertex3f(T_sc_prev.at<float>(3,0),T_sc_prev.at<float>(3,1),T_sc_prev.at<float>(3,2));
+                    glVertex3f(T_sc.at<float>(3,0),T_sc.at<float>(3,1),T_sc.at<float>(3,2));
+                glEnd();
+            }
+            T_sc_prev=T_sc;
+        }
+
+
     }
 }
 
@@ -332,6 +450,13 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M)
     }
     else
         M.SetIdentity();
+}
+
+void MapDrawer::SetCurrentCounter(int counter)
+{
+    unique_lock<mutex> lock(mMutexCounter);
+    currPathCounter=counter;
+    //std::cout<<currPathCounter<<std::endl;
 }
 
 } //namespace ORB_SLAM
