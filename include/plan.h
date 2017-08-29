@@ -102,7 +102,7 @@ public:
 	void UpdateMap(ppMatrix, Vector, Vector);
 
 	/** Gets the furthest node (index) in the path that can be reached with the feature constraint imposed */
-	int AdvanceStepCamera(ppMatrix M);
+	int AdvanceStepCamera(ppMatrix M, int thres = -1);
 
 private:
 	int n = 3;

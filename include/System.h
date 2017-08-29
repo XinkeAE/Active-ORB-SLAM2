@@ -139,7 +139,8 @@ public:
     //std::vector<std::vector<float>> vector_test;
     float x_curr = 0;
     float y_curr = 0;
-    bool hasPlannedTraj = false;
+    bool planRequestSent = false;
+    bool planStarted = false;
     float x_end = 0;
     float y_end = 0;
 

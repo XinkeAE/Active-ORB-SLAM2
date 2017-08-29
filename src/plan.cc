@@ -133,12 +133,12 @@ void plan_slam::UpdateMap(ppMatrix Map, Vector upper_bound, Vector lower_bound) 
 	MD.LB = lower_bound;
 }
 
-int plan_slam::AdvanceStepCamera(ppMatrix M) {
+int plan_slam::AdvanceStepCamera(ppMatrix M, int thres) {
 
 	StateValidChecker svc(MD);
 
 	int i = 0;
-	while (i < M.size() && svc.IsStateVisiblilty(M[i][0],M[i][1],M[i][2]))
+	while (i < M.size() && svc.IsStateVisiblilty(M[i][0],M[i][1],M[i][2],thres))
 		i++;
 	i--;
 
