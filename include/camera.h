@@ -48,7 +48,7 @@ public:
 
     int countVisible(float x_w, float y_w, float theta_rad_w) const;
 
-    bool IsStateVisiblilty(double x_w, double y_w, double theta_rad_w);
+    bool IsStateVisiblilty(double x_w, double y_w, double theta_rad_w, int thres = -1);
 
     void update_map(std::vector<ORB_SLAM2::MapPoint*> &vpPts);
 
