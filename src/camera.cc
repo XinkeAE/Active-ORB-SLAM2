@@ -10,12 +10,12 @@ camera::camera(map_data MD)
     fy = 522.47;
     cx = 474.95;
     cy = 264.27;
-    MaxX = 940;
-    MinX = 20;
+    MaxX = 950;
+    MinX = 10;
     MaxY = 530;
     MinY = 10;
-    max_dist = 3;
-    min_dist = 0.1;
+    max_dist = 6;
+    min_dist = 0.3;
 
     feature_threshold = THRES;
 
@@ -55,11 +55,11 @@ camera::camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
     fy = 522.47;
     cx = 474.95;
     cy = 264.27;
-    MaxX = 940;
-    MinX = 20;
+    MaxX = 950;
+    MinX = 10;
     MaxY = 530;
     MinY = 10;
-    max_dist = 3;
+    max_dist = 6;
     min_dist = 0.1;
 
     feature_threshold = THRES;

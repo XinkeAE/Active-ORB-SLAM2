@@ -12,7 +12,7 @@ Planning::Planning(cv::Mat goal_pose, Map* pMap){
     o_type = OBJECTIVE_PATHLENGTH;
 
     q_start = {0, 0, 0};
-    q_goal = {5.584, -2.0431, -1.5707};
+    q_goal = {5.03, -1.69, -1.5707};
     
     pl = new plan_slam();
   
@@ -67,7 +67,7 @@ void Planning::Run() {
             current_trajectory = pl->get_path_matrix();
 
             // check the point when the visibility constrain is not satisfied
-            int nxt_start = pl->AdvanceStepCamera(current_trajectory);
+            int nxt_start = pl->AdvanceStepCamera(current_trajectory,30);
 
             if(nxt_start>-1){
                 q_start = current_trajectory[nxt_start];

@@ -269,7 +269,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
-        if(!planStarted || (dist<0.5&&(!planRequestSent))){
+        if(!planStarted || (dist<0.2&&(!planRequestSent))){
             mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
             planRequestSent = true; 
             planStarted = true;

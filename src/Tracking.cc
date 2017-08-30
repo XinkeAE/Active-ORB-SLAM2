@@ -1652,7 +1652,7 @@ bool Tracking::checkWayPoint()
         if(path_it_counter<(planned_trajectory.size()-1))
         {
             double distance=(curr_des[0]-x)*(curr_des[0]-x)+(curr_des[1]-y)*(curr_des[1]-y);
-            if(distance<(0.12*0.12))
+            if(distance<(0.16*0.16))
             {
                 path_it_counter++;
                 curr_des=planned_trajectory[path_it_counter];
