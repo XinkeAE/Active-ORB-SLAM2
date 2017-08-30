@@ -19,7 +19,7 @@
 #include "MapPoint.h"
 //#include <system.h>
 
-#define THRES 20
+#define THRES 50
 
 typedef struct {
     	std::vector<std::vector<double>> Map;
