@@ -25,10 +25,10 @@ using namespace std;
 
 #define PI 3.1416
 
-#define ROBOT_RADIUS 0.25
+#define ROBOT_RADIUS 0.35
 #define TURN_RADIUS 0.20
 #define DT 0.2
-#define MAX_DIST_HEURISTIC 2
+#define MAX_DIST_HEURISTIC 1.5
 
 typedef struct {
 	bool valid;

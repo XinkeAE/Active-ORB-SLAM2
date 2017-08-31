@@ -273,9 +273,27 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
             planRequestSent = true; 
             planStarted = true;
+            //cout << "********************" << endl;
+            //cout << __LINE__ << endl;
+            //cout << "********************" << endl;
         }
         std::vector<std::vector<double>> planned_trajectory =
         mpPlanner->GetPlanningTrajectory();
+
+
+        /*
+        if (planned_trajectory.empty()){
+            cout << "********************" << endl;
+            cout << __LINE__ << endl;
+            cout << "********************" << endl;
+        }
+
+        if (mpTracker->planned_trajectory.size()==planned_trajectory.size()){
+            cout << "********************" << endl;
+            cout << __LINE__ << endl;
+            cout << "********************" << endl;
+        }*/
+
 
         // If update the trajectory then we reset the plan request flag
         if (!planned_trajectory.empty() && (mpTracker->planned_trajectory.size()!=planned_trajectory.size()) ) {
@@ -283,6 +301,9 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             y_end = planned_trajectory.back()[1];
             mpTracker->planned_trajectory = planned_trajectory;
             planRequestSent = false;
+            //cout << "********************" << endl;
+            //cout << __LINE__ << endl;
+            //cout << "********************" << endl;
         }
     }
 

@@ -20,7 +20,7 @@
 //#include <system.h>
 #include <opencv2/core/eigen.hpp>
 
-#define THRES 100
+#define THRES 50
 
 typedef struct {
     	std::vector<std::vector<double>> Map;

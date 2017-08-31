@@ -1073,7 +1073,7 @@ bool Tracking::TrackLocalMap()
         cout << "number of points predicted = " << number << endl;
     }
     */
-    
+
 
     // Decide if the tracking was succesful
     // More restrictive if there was a relocalization recently
@@ -1712,7 +1712,7 @@ bool Tracking::checkWayPoint()
         if(path_it_counter<(planned_trajectory.size()-1))
         {
             double distance=(curr_des[0]-x)*(curr_des[0]-x)+(curr_des[1]-y)*(curr_des[1]-y);
-            if(distance<(0.16*0.16))
+            if(distance<(0.11*0.11))
             {
                 path_it_counter++;
                 curr_des=planned_trajectory[path_it_counter];
