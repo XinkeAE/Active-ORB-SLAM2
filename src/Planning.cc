@@ -46,10 +46,10 @@ void Planning::Run() {
                                                              vpPts[i]->GetWorldPos().at<float>(1),
                                                              vpPts[i]->GetWorldPos().at<float>(2)});
 
-                    if(vpPts[i]->theta_std * 3 < 15.0/57.3){
-                        theta_interval = 15.0/57.3;
+                    if(vpPts[i]->theta_std * 2.5 < 5.0/57.3){
+                        theta_interval = 5.0/57.3;
                     }else{
-                        theta_interval = vpPts[i]->theta_std * 3;
+                        theta_interval = vpPts[i]->theta_std * 2.5;
                     }
 
                     UB.push_back(double(vpPts[i]->theta_mean + theta_interval));
@@ -72,7 +72,7 @@ void Planning::Run() {
             current_trajectory = pl->get_path_matrix();
 
             // check the point when the visibility constrain is not satisfied
-            int nxt_start = pl->AdvanceStepCamera(current_trajectory,30);
+            int nxt_start = pl->AdvanceStepCamera(current_trajectory);
 
             if(nxt_start>-1){
                 q_start = current_trajectory[nxt_start];

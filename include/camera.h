@@ -1,6 +1,6 @@
 #ifndef CAM_MOD
 #define CAM_MOD
-//#include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <vector>
 #include <iostream>
 #include <sstream>
@@ -18,8 +18,9 @@
 #include <Eigen/Dense>
 #include "MapPoint.h"
 //#include <system.h>
+#include <opencv2/core/eigen.hpp>
 
-#define THRES 20
+#define THRES 100
 
 typedef struct {
     	std::vector<std::vector<double>> Map;
@@ -49,6 +50,7 @@ public:
     bool setRobotPose(float x_w, float y_w, float theta_rad_w);
 
     int countVisible(float x_w, float y_w, float theta_rad_w) const;
+    int countVisible(cv::Mat Twb) const;
 
     bool IsStateVisiblilty(double x_w, double y_w, double theta_rad_w, int thres = -1);
 

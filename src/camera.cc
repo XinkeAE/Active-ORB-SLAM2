@@ -10,10 +10,10 @@ camera::camera(map_data MD)
     fy = 522.47;
     cx = 474.95;
     cy = 264.27;
-    MaxX = 950;
-    MinX = 10;
-    MaxY = 530;
-    MinY = 10;
+    MaxX = 930;
+    MinX = 40;
+    MaxY = 520;
+    MinY = 20;
     max_dist = 6;
     min_dist = 0.3;
 
@@ -98,6 +98,35 @@ int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
             (float)(sin(theta_rad_w)), (float)cos(theta_rad_w), 0, y_w,
             0,         0,         1,   0,
             0,         0,        0,    1.0000;
+
+    Eigen::Matrix4f T_sc = T_sw * T_wb * T_bc;
+    Eigen::Matrix4f T_cs = T_sc.inverse();
+
+    if (1) {//setRobotPose(x_w, y_w, theta_rad_w)) {
+        
+        for (int i = 0; i < num_pt; ++i)
+        {
+            if (isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs, max_range[i], min_range[i]))
+                num_visible+=1;
+        }
+    }   
+    else
+    {
+        std::cout<<"Cannot get current robot pose"<<std::endl;
+    } 
+    return num_visible;
+}
+
+
+int camera::countVisible(cv::Mat Twb) const {
+    int num_pt=map_vec.size();
+    int num_visible=0;
+
+    //cout << x_w << " " << y_w << " " << theta_rad_w << endl;
+
+    // I modified this section to enable the function to be const. (requirement of OMPL)
+    Eigen::Matrix<float, 4,4> T_wb;
+    cv2eigen(Twb, T_wb);
 
     Eigen::Matrix4f T_sc = T_sw * T_wb * T_bc;
     Eigen::Matrix4f T_cs = T_sc.inverse();
