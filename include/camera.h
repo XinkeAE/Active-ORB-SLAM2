@@ -24,7 +24,9 @@
 typedef struct {
     	std::vector<std::vector<double>> Map;
     	std::vector<double> UB;
-    	std::vector<double> LB;
+        std::vector<double> LB;
+        std::vector<double> maxDist;
+        std::vector<double> minDist;
 } map_data;
 
 using namespace std;
@@ -40,7 +42,7 @@ public:
 
     std::vector<float> read_text_single_line(std::string points);
 
-    bool isInFrustum(std::vector<float> MapPoint_s, float upper_limit, float lower_limit, Eigen::Matrix4f, Eigen::Matrix4f) const;
+    bool isInFrustum(std::vector<float> MapPoint_s, float upper_limit, float lower_limit, Eigen::Matrix4f, Eigen::Matrix4f, float max_range, float min_range) const;
 
     bool setRobotPose(Eigen::Matrix4f Twb);
 
@@ -69,6 +71,8 @@ private:
     //cv::Mat map;
     std::vector<float> upper_bound;
     std::vector<float> lower_bound;
+    std::vector<float> max_range;
+    std::vector<float> min_range;
 
 
     // camera frame

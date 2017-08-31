@@ -22,12 +22,18 @@ camera::camera(map_data MD)
     //load files Map
     upper_bound.resize(MD.UB.size());
     lower_bound.resize(MD.LB.size());
+    max_range.resize(MD.maxDist.size());
+    min_range.resize(MD.minDist.size());
 
    vector<float> v_float_ub(MD.UB.begin(), MD.UB.end());
    vector<float> v_float_lb(MD.LB.begin(), MD.LB.end());
+   vector<float> v_float_max_dist(MD.maxDist.begin(), MD.maxDist.end());
+   vector<float> v_float_min_dist(MD.minDist.begin(), MD.minDist.end());
 
    upper_bound = v_float_ub;
    lower_bound = v_float_lb;
+   max_range = v_float_max_dist;
+   min_range = v_float_min_dist;
 
    for (int i = 0; i < MD.Map.size(); i++) {
       	vector<float> v_float(MD.Map[i].begin(), MD.Map[i].end());
@@ -100,7 +106,7 @@ int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
         
         for (int i = 0; i < num_pt; ++i)
         {
-            if (isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs))
+            if (isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs, max_range[i], min_range[i]))
                 num_visible+=1;
         }
     }   
@@ -122,7 +128,7 @@ bool camera::IsStateVisiblilty(double x_w, double y_w, double theta_rad_w, int t
 }
 
 
-bool camera::isInFrustum(std::vector<float> MapPoint_s, float upper_limit, float lower_limit, Eigen::Matrix4f T_sc, Eigen::Matrix4f T_cs) const {
+bool camera::isInFrustum(std::vector<float> MapPoint_s, float upper_limit, float lower_limit, Eigen::Matrix4f T_sc, Eigen::Matrix4f T_cs, float max_range, float min_range) const {
     
         //convert map points into carmera frame
         Eigen::Matrix<float, 4, 1> map_point_s(MapPoint_s.data());
@@ -151,6 +157,9 @@ bool camera::isInFrustum(std::vector<float> MapPoint_s, float upper_limit, float
         // step 3: rule out the points which are too close or too far away
         float dist=sqrt(PcZ*PcZ+PcY*PcY+PcX*PcX);
         if(dist<min_dist || dist>max_dist)
+            return false;
+
+        if(dist<min_range || dist>max_range)
             return false;
 
         //% step 4: rule out the points whose viewing direction is out of 95% t-distribution

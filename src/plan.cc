@@ -126,11 +126,15 @@ void plan_slam::getPath(ob::ProblemDefinitionPtr pdef, ppMatrix &M) {
 	}
 }
 
-void plan_slam::UpdateMap(ppMatrix Map, Vector upper_bound, Vector lower_bound) {
+void plan_slam::UpdateMap(ppMatrix Map, Vector upper_bound, Vector lower_bound, Vector max_dist, Vector min_dist) {
 
 	MD.Map = Map;
 	MD.UB = upper_bound;
 	MD.LB = lower_bound;
+
+	MD.maxDist = max_dist;
+	MD.minDist = min_dist;
+
 }
 
 int plan_slam::AdvanceStepCamera(ppMatrix M, int thres) {

@@ -27,6 +27,8 @@ void Planning::Run() {
             planningMap.clear();
             UB.clear();
             LB.clear();
+            maxDist.clear();
+            minDist.clear();
 
             // update map here
             // 1. access to the map
@@ -52,12 +54,15 @@ void Planning::Run() {
 
                     UB.push_back(double(vpPts[i]->theta_mean + theta_interval));
                     LB.push_back(double(vpPts[i]->theta_mean - theta_interval));
+
+                    maxDist.push_back(double(vpPts[i]->GetMaxDistanceInvariance()));
+                    minDist.push_back(double(vpPts[i]->GetMinDistanceInvariance()));
                 }
             }
 
             //std::cout << planningMap.size() << std::endl;
 
-            pl->UpdateMap(planningMap, UB, LB);
+            pl->UpdateMap(planningMap, UB, LB, maxDist, minDist);
 
             // do actual planning
             pl->plan(q_start, q_goal, 2, p_type, o_type);

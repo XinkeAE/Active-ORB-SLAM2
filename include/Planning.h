@@ -59,6 +59,8 @@ private:
 	ppMatrix planningMap;
 	Vector UB;
 	Vector LB;
+	Vector maxDist;
+	Vector minDist;
 	float theta_interval;
 	
 	// Start and goal
