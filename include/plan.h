@@ -99,7 +99,7 @@ public:
 	}
 
 	/** Update camera model map */
-	void UpdateMap(ppMatrix, Vector, Vector, Vector, Vector);
+	void UpdateMap(ppMatrix, Vector, Vector, Vector, Vector, Vector); // update with found ratio
 
 	/** Gets the furthest node (index) in the path that can be reached with the feature constraint imposed */
 	int AdvanceStepCamera(ppMatrix M, int thres = -1);

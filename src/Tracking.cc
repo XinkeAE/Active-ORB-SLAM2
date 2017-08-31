@@ -1017,7 +1017,7 @@ bool Tracking::TrackLocalMap()
     mlTotalObservations.push_back(totalObservation); //xinke
 
 
-    /*
+    
     // check the camera model
     map_data MD;    
     double theta_interval;
@@ -1033,6 +1033,7 @@ bool Tracking::TrackLocalMap()
 
             float minDist = vpPts[i]->GetMinDistanceInvariance();
             float maxDist = vpPts[i]->GetMaxDistanceInvariance();
+            float foundRatio = vpPts[i]->GetFoundRatio();
 
             //float Dist = sqrt((Tsc_curr.at<float>(0,3) - vpPts[i]->GetWorldPos().at<float>(0))*(Tsc_curr.at<float>(0,3) - vpPts[i]->GetWorldPos().at<float>(0))+
             //(Tsc_curr.at<float>(1,3) - vpPts[i]->GetWorldPos().at<float>(1))*(Tsc_curr.at<float>(1,3) - vpPts[i]->GetWorldPos().at<float>(2))+
@@ -1055,6 +1056,7 @@ bool Tracking::TrackLocalMap()
             MD.LB.push_back(double(vpPts[i]->theta_mean - theta_interval));
             MD.maxDist.push_back(double(maxDist));
             MD.minDist.push_back(double(minDist));
+            MD.foundRatio.push_back(double(foundRatio));
         }
     //}
 
@@ -1072,7 +1074,6 @@ bool Tracking::TrackLocalMap()
 
         cout << "number of points predicted = " << number << endl;
     }
-    */
 
 
     // Decide if the tracking was succesful

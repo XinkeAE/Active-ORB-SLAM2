@@ -29,6 +29,7 @@ void Planning::Run() {
             LB.clear();
             maxDist.clear();
             minDist.clear();
+            foundRatio.clear();
 
             // update map here
             // 1. access to the map
@@ -57,12 +58,13 @@ void Planning::Run() {
 
                     maxDist.push_back(double(vpPts[i]->GetMaxDistanceInvariance()));
                     minDist.push_back(double(vpPts[i]->GetMinDistanceInvariance()));
+                    foundRatio.push_back(double(vpPts[i]->GetFoundRatio()));
                 }
             }
 
             //std::cout << planningMap.size() << std::endl;
 
-            pl->UpdateMap(planningMap, UB, LB, maxDist, minDist);
+            pl->UpdateMap(planningMap, UB, LB, maxDist, minDist, foundRatio);
 
             // do actual planning
             pl->plan(q_start, q_goal, 2, p_type, o_type);

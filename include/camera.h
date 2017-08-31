@@ -28,6 +28,7 @@ typedef struct {
         std::vector<double> LB;
         std::vector<double> maxDist;
         std::vector<double> minDist;
+        std::vector<double> foundRatio;
 } map_data;
 
 using namespace std;
@@ -75,6 +76,7 @@ private:
     std::vector<float> lower_bound;
     std::vector<float> max_range;
     std::vector<float> min_range;
+    std::vector<float> foundRatio;
 
 
     // camera frame

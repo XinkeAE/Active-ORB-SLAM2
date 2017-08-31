@@ -61,6 +61,8 @@ private:
 	Vector LB;
 	Vector maxDist;
 	Vector minDist;
+	Vector foundRatio;
+	
 	float theta_interval;
 	
 	// Start and goal

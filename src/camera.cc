@@ -24,16 +24,19 @@ camera::camera(map_data MD)
     lower_bound.resize(MD.LB.size());
     max_range.resize(MD.maxDist.size());
     min_range.resize(MD.minDist.size());
+    foundRatio.resize(MD.foundRatio.size());
 
    vector<float> v_float_ub(MD.UB.begin(), MD.UB.end());
    vector<float> v_float_lb(MD.LB.begin(), MD.LB.end());
    vector<float> v_float_max_dist(MD.maxDist.begin(), MD.maxDist.end());
    vector<float> v_float_min_dist(MD.minDist.begin(), MD.minDist.end());
+   vector<float> v_float_found_ratio(MD.foundRatio.begin(), MD.foundRatio.end());
 
    upper_bound = v_float_ub;
    lower_bound = v_float_lb;
    max_range = v_float_max_dist;
    min_range = v_float_min_dist;
+   foundRatio = v_float_found_ratio;
 
    for (int i = 0; i < MD.Map.size(); i++) {
       	vector<float> v_float(MD.Map[i].begin(), MD.Map[i].end());
@@ -88,7 +91,7 @@ camera::camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
 
 int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
     int num_pt=map_vec.size();
-    int num_visible=0;
+    float num_visible=0;
 
     //cout << x_w << " " << y_w << " " << theta_rad_w << endl;
 
@@ -107,20 +110,20 @@ int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
         for (int i = 0; i < num_pt; ++i)
         {
             if (isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs, max_range[i], min_range[i]))
-                num_visible+=1;
+            num_visible+=foundRatio[i];
         }
     }   
     else
     {
         std::cout<<"Cannot get current robot pose"<<std::endl;
     } 
-    return num_visible;
+    return int(round(num_visible));
 }
 
 
 int camera::countVisible(cv::Mat Twb) const {
     int num_pt=map_vec.size();
-    int num_visible=0;
+    float num_visible=0;
 
     //cout << x_w << " " << y_w << " " << theta_rad_w << endl;
 
@@ -136,14 +139,14 @@ int camera::countVisible(cv::Mat Twb) const {
         for (int i = 0; i < num_pt; ++i)
         {
             if (isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs, max_range[i], min_range[i]))
-                num_visible+=1;
+                num_visible+=foundRatio[i];
         }
     }   
     else
     {
         std::cout<<"Cannot get current robot pose"<<std::endl;
     } 
-    return num_visible;
+    return int(round(num_visible));
 }
 
 bool camera::IsStateVisiblilty(double x_w, double y_w, double theta_rad_w, int ths) {
