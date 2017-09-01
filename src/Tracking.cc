@@ -1017,7 +1017,7 @@ bool Tracking::TrackLocalMap()
     mlTotalObservations.push_back(totalObservation); //xinke
 
 
-    
+
     // check the camera model
     map_data MD;    
     double theta_interval;
@@ -1070,9 +1070,10 @@ bool Tracking::TrackLocalMap()
         
         cv::Mat Twb_cam = T_wb_initial_mat.inv()*T_wb_mat;
 
-        int number = camera_model.countVisible(Twb_cam);
+        visible_info VI;
+        VI = camera_model.countVisible(Twb_cam);
 
-        cout << "number of points predicted = " << number << endl;
+        cout << "number of points predicted = " << VI.number << endl;
     }
 
 
