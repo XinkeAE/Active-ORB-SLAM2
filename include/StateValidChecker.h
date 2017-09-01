@@ -27,7 +27,7 @@ using namespace std;
 
 #define ROBOT_RADIUS 0.35
 #define TURN_RADIUS 0.20
-#define DT 0.2
+#define DT 0.1
 #define MAX_DIST_HEURISTIC 1.5
 
 typedef struct {

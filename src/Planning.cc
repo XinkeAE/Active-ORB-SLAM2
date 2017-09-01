@@ -9,6 +9,7 @@ Planning::Planning(cv::Mat goal_pose, Map* pMap){
     hasRequest = false;
     std::cout << "OMPL version: " << OMPL_VERSION << std::endl;
     p_type = PLANNER_RRTSTAR;
+    //p_type = PLANNER_RRT;
     o_type = OBJECTIVE_PATHLENGTH;
 
     q_start = {0, 0, 0};
@@ -19,6 +20,7 @@ Planning::Planning(cv::Mat goal_pose, Map* pMap){
 }
 
 void Planning::Run() {
+    int counter = 1;
     while (1) {
         // Run planner when Tracking thread send request.
         if (CheckHasRequest()) {
@@ -47,8 +49,8 @@ void Planning::Run() {
                                                              vpPts[i]->GetWorldPos().at<float>(1),
                                                              vpPts[i]->GetWorldPos().at<float>(2)});
 
-                    if(vpPts[i]->theta_std * 2.5 < 5.0/57.3){
-                        theta_interval = 5.0/57.3;
+                    if(vpPts[i]->theta_std * 2.5 < 10.0/57.3){
+                        theta_interval = 10.0/57.3;
                     }else{
                         theta_interval = vpPts[i]->theta_std * 2.5;
                     }
@@ -65,13 +67,39 @@ void Planning::Run() {
             //std::cout << planningMap.size() << std::endl;
 
             pl->UpdateMap(planningMap, UB, LB, maxDist, minDist, foundRatio);
+            double x_rand, y_rand, theta_rand;
+            double x_var = 2;
+            double y_var = 2;
+            double theta_var = PI;
+            std::vector<double> q_curr_goal = q_goal;
+            map_data MD_curr = {planningMap, UB, LB};
+            StateValidChecker svc(MD_curr);
+            if(counter%2==0){
+                do{
+                    x_rand = double(rand())/double(RAND_MAX)*2*x_var - x_var + q_start[0];
+                    y_rand = double(rand())/double(RAND_MAX)*2*y_var - y_var + q_start[1];
+                    theta_rand = double(rand())/double(RAND_MAX)*2*theta_var - theta_var + q_start[2];
+                    q_curr_goal = {x_rand, y_rand, theta_rand};
+                }while(svc.isValid(q_curr_goal));
+                counter = 1;
+            }
+
 
             // do actual planning
             pl->plan(q_start, q_goal, 2, p_type, o_type);
 
+            counter ++;
             // save trajectory
             current_trajectory.clear();
             current_trajectory = pl->get_path_matrix();
+
+            /*
+            cout << q_start[0] << " "  << q_start[1] << " " << q_start[2] << endl;            
+            for (int k = 0; k < current_trajectory.size(); k++) {
+                cout << current_trajectory[k][0] << " "  << current_trajectory[k][1] << " " << current_trajectory[k][2] << endl;
+            }
+            cout << q_goal[0] << " "  << q_goal[1] << " " << q_goal[2] << endl;   
+            */                     
 
             // check the point when the visibility constrain is not satisfied
             int nxt_start = pl->AdvanceStepCamera(current_trajectory);

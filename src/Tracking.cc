@@ -1017,7 +1017,7 @@ bool Tracking::TrackLocalMap()
     mlTotalObservations.push_back(totalObservation); //xinke
 
 
-
+    /*
     // check the camera model
     map_data MD;    
     double theta_interval;
@@ -1075,7 +1075,7 @@ bool Tracking::TrackLocalMap()
 
         cout << "number of points predicted = " << VI.number << endl;
     }
-
+    */
 
     // Decide if the tracking was succesful
     // More restrictive if there was a relocalization recently
@@ -1708,13 +1708,22 @@ bool Tracking::checkWayPoint()
     float x=currPose.at<float>(0,3);
     float y=currPose.at<float>(1,3);
     if(path_it_counter<planned_trajectory.size()){
-        if(curr_des.empty())
+        if(curr_des.empty()){
             curr_des=planned_trajectory[path_it_counter];
+        }
+        
 
         if(path_it_counter<(planned_trajectory.size()-1))
         {
-            double distance=(curr_des[0]-x)*(curr_des[0]-x)+(curr_des[1]-y)*(curr_des[1]-y);
-            if(distance<(0.11*0.11))
+            vector<double> prev_des;
+            if(path_it_counter>0){
+                prev_des = planned_trajectory[path_it_counter-1];
+            }else{
+                prev_des = planned_trajectory[0];;
+            }
+            double d_des=(curr_des[0]-prev_des[0])*(curr_des[0]-prev_des[0])+(curr_des[1]-prev_des[1])*(curr_des[1]-prev_des[1]);
+            double d_cur=(x-prev_des[0])*(x-prev_des[0])+(y-prev_des[1])*(y-prev_des[1]);
+            if(d_des < d_cur)
             {
                 path_it_counter++;
                 curr_des=planned_trajectory[path_it_counter];

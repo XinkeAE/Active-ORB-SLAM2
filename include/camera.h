@@ -20,7 +20,7 @@
 //#include <system.h>
 #include <opencv2/core/eigen.hpp>
 
-#define THRES 50
+#define THRES 30
 #define GRID_COLS 30
 #define GRID_ROWS 20
 
