@@ -2,7 +2,7 @@
 
 
 
-camera::camera(map_data MD)
+camera::camera(map_data MD, int thres)
 {
 	std::cout << "Initializing camera data..." << std::endl;
 
@@ -11,13 +11,13 @@ camera::camera(map_data MD)
     cx = 474.95;
     cy = 264.27;
     MaxX = 930;
-    MinX = 40;
+    MinX = 10;
     MaxY = 520;
     MinY = 20;
     max_dist = 6;
     min_dist = 0.3;
 
-    feature_threshold = THRES;
+    feature_threshold = thres;
 
     //load files Map
     upper_bound.resize(MD.UB.size());
@@ -85,7 +85,7 @@ camera::camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
     max_dist = 6;
     min_dist = 0.1;
 
-    feature_threshold = THRES;
+    feature_threshold = 20;
 
     //load files Map
     update_map(vpPts);

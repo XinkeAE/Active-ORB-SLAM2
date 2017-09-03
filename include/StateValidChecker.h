@@ -27,7 +27,7 @@ using namespace std;
 
 #define ROBOT_RADIUS 0.35
 #define TURN_RADIUS 0.20
-#define DT 0.1
+#define DT 0.3
 #define MAX_DIST_HEURISTIC 1.5
 
 typedef struct {
@@ -47,9 +47,9 @@ typedef struct {
 class StateValidChecker : public collisionDetection, public camera
 {
 public:
-	StateValidChecker(const ob::SpaceInformationPtr &si, map_data MD) :
+	StateValidChecker(const ob::SpaceInformationPtr &si, map_data MD, int thres = 20) :
 		mysi_(si.get()),
-		camera(MD),
+		camera(MD, thres),
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),
@@ -58,8 +58,8 @@ public:
 		StartState(3)
 	{};
 
-	StateValidChecker(map_data MD) :
-		camera(MD),
+	StateValidChecker(map_data MD, int thres = 20) :
+		camera(MD, thres),
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),

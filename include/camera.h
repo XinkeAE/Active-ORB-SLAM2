@@ -20,7 +20,7 @@
 //#include <system.h>
 #include <opencv2/core/eigen.hpp>
 
-#define THRES 30
+//#define THRES 25
 #define GRID_COLS 30
 #define GRID_ROWS 20
 
@@ -52,7 +52,7 @@ class camera
 {
 public:
     // todo: compute the gridElement?Inv
-    camera(map_data MD);
+    camera(map_data MD, int);
 
     camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts);
     
@@ -75,6 +75,8 @@ public:
     void update_map(std::vector<ORB_SLAM2::MapPoint*> &vpPts);
 
     std::vector<int> posInGrid(float u, float v) const;
+
+    int feature_threshold;
 
     // todo: implement
     bool computeMatrixStd(Eigen::Matrix<float, GRID_ROWS, GRID_COLS>& frameGrid);
@@ -120,8 +122,6 @@ private:
     Eigen::Matrix4f T_sw;
     Eigen::Matrix4f T_bc;
     Eigen::Matrix4f T_sb; 
-
-    int feature_threshold;
 
 };
 

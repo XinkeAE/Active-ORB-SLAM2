@@ -42,12 +42,12 @@ ob::PlannerPtr plan_slam::allocatePlanner(ob::SpaceInformationPtr si, plannerTyp
     {
         case PLANNER_RRT:
         {
-            return std::make_shared<og::RRT>(si, MD);
+            return std::make_shared<og::RRT>(si, MD, feature_thres);
             break;
         }
         case PLANNER_RRTSTAR:
         {
-            return std::make_shared<og::RRTstar>(si, MD);
+            return std::make_shared<og::RRTstar>(si, MD, feature_thres);
             break;
         }
         default:
@@ -140,7 +140,7 @@ void plan_slam::UpdateMap(ppMatrix Map, Vector upper_bound, Vector lower_bound, 
 
 int plan_slam::AdvanceStepCamera(ppMatrix M, int thres) {
 
-	StateValidChecker svc(MD);
+	StateValidChecker svc(MD, thres);
 
 	int i = 0;
 	while (i < M.size() && svc.IsStateVisiblilty(M[i][0],M[i][1],M[i][2],thres))
@@ -148,6 +148,10 @@ int plan_slam::AdvanceStepCamera(ppMatrix M, int thres) {
 	i--;
 
 	return i;
+}
+
+void plan_slam::set_featureThreshold(int num) {
+	feature_thres = num;
 }
 
 bool plan_slam::plan(Vector q_start, Vector q_goal, double runtime, plannerType p_type, planningObjective o_type) {

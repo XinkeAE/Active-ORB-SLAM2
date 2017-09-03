@@ -82,7 +82,7 @@ namespace ompl
         {
         public:
 
-            RRTstar(const base::SpaceInformationPtr &si, map_data);
+            RRTstar(const base::SpaceInformationPtr &si, map_data, int);
 
             virtual ~RRTstar();
 

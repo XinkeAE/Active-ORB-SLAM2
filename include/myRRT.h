@@ -69,7 +69,7 @@ namespace ompl
         public:
 
             /** \brief Constructor */
-            RRT(const base::SpaceInformationPtr &si, map_data);
+            RRT(const base::SpaceInformationPtr &si, map_data, int);
 
             virtual ~RRT();
 

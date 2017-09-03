@@ -104,12 +104,17 @@ public:
 	/** Gets the furthest node (index) in the path that can be reached with the feature constraint imposed */
 	int AdvanceStepCamera(ppMatrix M, int thres = -1);
 
+	/** Set the threshold for the feature constraint */
+	void set_featureThreshold(int num);
+
 private:
 	int n = 3;
 
 	ppMatrix Path;
 
 	map_data MD;
+
+	int feature_thres;
 
 };
 

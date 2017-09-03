@@ -41,7 +41,7 @@
 
 #include "myRRT.h"
 
-ompl::geometric::RRT::RRT(const base::SpaceInformationPtr &si, map_data MD) : base::Planner(si, "RRT"), StateValidChecker(si, MD){
+ompl::geometric::RRT::RRT(const base::SpaceInformationPtr &si, map_data MD, int thres) : base::Planner(si, "RRT"), StateValidChecker(si, MD){
     specs_.approximateSolutions = true;
     specs_.directed = true;
 

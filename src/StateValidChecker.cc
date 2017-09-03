@@ -508,7 +508,7 @@ double StateValidChecker::MotionCostCamera(ppMatrix Q) const {
 		//cout << Q[i][0] << " " << Q[i][1] << " " << Q[i][2] << endl;
 
 		int c = countVisible(Q[i][0], Q[i][1], Q[i][2]);
-		C += c < THRES ? 1./1e-4 : 1./(double)c;
+		C += c < feature_threshold ? 1./1e-4 : 1./(double)c;
 	}
 	return C;
 }

@@ -1719,17 +1719,26 @@ bool Tracking::checkWayPoint()
             if(path_it_counter>0){
                 prev_des = planned_trajectory[path_it_counter-1];
             }else{
-                prev_des = planned_trajectory[0];;
+                prev_des = planned_trajectory[0];
             }
-            double d_des=(curr_des[0]-prev_des[0])*(curr_des[0]-prev_des[0])+(curr_des[1]-prev_des[1])*(curr_des[1]-prev_des[1]);
-            double d_cur=(x-prev_des[0])*(x-prev_des[0])+(y-prev_des[1])*(y-prev_des[1]);
-            if(d_des < d_cur)
+            double d_des=sqrt((curr_des[0]-prev_des[0])*(curr_des[0]-prev_des[0])+(curr_des[1]-prev_des[1])*(curr_des[1]-prev_des[1]));
+            double d_cur=0.03;
+            vector<double> dir_des;
+            if(d_des != 0){
+                dir_des.push_back((curr_des[0]-prev_des[0])/d_des);
+                dir_des.push_back((curr_des[1]-prev_des[1])/d_des);
+                d_cur = (x - prev_des[0])*dir_des[0] + (y - prev_des[1])*dir_des[1];
+            }
+            if(d_des <= (d_cur+0.03))
             {
+                //cout << "move one point forward" << endl;
                 path_it_counter++;
                 curr_des=planned_trajectory[path_it_counter];
                 return true;
             }
         }
+
+        //std::cout << "desired position = (" << curr_des[0] << ", " << curr_des[1] << ", "<< curr_des[2] << ") " << std::endl;
     }
     return false;
 
