@@ -155,6 +155,11 @@ public:
     int path_it_counter=1;
 
     bool checkWayPoint();
+
+    bool recoverMode = false;
+    size_t recoverCounter = 0;
+    size_t waypointCounter = 0;
+    bool checkWayPointRecover();
     
     
     

@@ -37,6 +37,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose2D.h>
 #include <tf/transform_broadcaster.h>
+#include <std_msgs/Bool.h>
 
 // octomap 
 #include <octomap/octomap.h>
@@ -55,7 +56,9 @@ using namespace std;
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub, ros::Publisher octoPub, ros::Publisher destPub):mpSLAM(pSLAM),posePublisher(posePub),octomapPublisher(octoPub),currDestPublisher(destPub){
+    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub, ros::Publisher octoPub, ros::Publisher destPub, ros::Publisher lostPub)
+                :mpSLAM(pSLAM),posePublisher(posePub),octomapPublisher(octoPub),currDestPublisher(destPub), trackingLostPublisher(lostPub)
+    {
         T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
                                                -1, 0, 0, -0.1, // -0.1,//-0.1,
                                                 0,-1, 0, 0,
@@ -100,6 +103,7 @@ public:
     ros::Publisher posePublisher; 
     ros::Publisher octomapPublisher;
     ros::Publisher currDestPublisher;
+    ros::Publisher trackingLostPublisher;
 };
 
 int main(int argc, char **argv)
@@ -130,8 +134,9 @@ int main(int argc, char **argv)
     ros::Publisher pose_pub = nh.advertise<geometry_msgs::PoseStamped> ( "/orb/pose_est", 2 );
     ros::Publisher octo_pub = nh.advertise<octomap_msgs::Octomap>( "octomap_3d", 1 );
     ros::Publisher dest_pub = nh.advertise<geometry_msgs::Pose2D> ("planning/data", 1);
+    ros::Publisher lost_pub = nh.advertise<std_msgs::Bool> ("/orb/lost", 1);
 
-    ImageGrabber igb(&SLAM, pose_pub, octo_pub, dest_pub);
+    ImageGrabber igb(&SLAM, pose_pub, octo_pub, dest_pub, lost_pub);
 
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
 
@@ -193,6 +198,12 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     camera_cy = CamIntrinsic.at<float>(1,2);
 
     depthFactor = mpSLAM->GetDepthScaleFactor();
+
+    if(mpSLAM->GetTrackingState() == 3){
+        trackingLostPublisher.publish(true);
+    }else{
+        trackingLostPublisher.publish(false);
+    }
     
     if (pose.empty())
         return;

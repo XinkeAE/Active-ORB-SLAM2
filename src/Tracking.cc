@@ -241,7 +241,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     Track();
 
     // compute the pose in the body frame
-    if(!mCurrentFrame.mTcw.empty()){
+    if(!mCurrentFrame.mTcw.empty() && mState==OK){
         cv::Mat Tsc = mCurrentFrame.mTcw.clone().inv();
         cv::Mat T_wb_mat = cv::Mat(T_ws_mat*Tsc*T_cb_mat);
         if(!TwbInitialized){
@@ -253,9 +253,25 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         
         currPose = T_wb_initial_mat.inv()*T_wb_mat;
         checkWayPoint();
-        // cv::Rect(0,0,3,3)
-        // Eigen angle axis
 
+    }
+
+    // recover from the LOST state
+    if(mState==LOST){
+        recoverCounter++;
+        if(recoverCounter > 100){
+            recoverMode = true;
+            cout << "start recover mode" << endl;
+            if(checkWayPointRecover()){
+                recoverCounter = 0;
+                recoverMode = false;
+            }
+        }
+    }else if (mState==OK)
+    {
+        recoverCounter = 0;
+        recoverMode = false;
+        //cout << "not in recover mode" << endl;
     }
 
 
@@ -1741,6 +1757,24 @@ bool Tracking::checkWayPoint()
         //std::cout << "desired position = (" << curr_des[0] << ", " << curr_des[1] << ", "<< curr_des[2] << ") " << std::endl;
     }
     return false;
+
+}
+
+bool Tracking::checkWayPointRecover(){
+    // get rid of all the following way points
+    if(path_it_counter<planned_trajectory.size()){
+        planned_trajectory.erase(planned_trajectory.begin() + path_it_counter, planned_trajectory.end());
+    }
+    if(path_it_counter > 0){
+        path_it_counter --;
+        curr_des = planned_trajectory[path_it_counter];
+    }else{
+        cout << "cannot find previous path point" << endl;
+        return false;
+    }
+
+
+    return true;
 
 }
 
