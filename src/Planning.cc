@@ -2,6 +2,20 @@
 
 #include <cmath>
 
+#include <numeric>
+
+void compute_std(std::vector<double> v, double & mean, double & stdev)
+{
+    double sum = std::accumulate(v.begin(), v.end(), 0.0);
+    mean = sum / v.size();
+
+    std::vector<double> diff(v.size());
+    std::transform(v.begin(), v.end(), diff.begin(),
+                std::bind2nd(std::minus<double>(), mean));
+    double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    stdev = std::sqrt(sq_sum / v.size());
+}
+
 namespace ORB_SLAM2 {
 
 Planning::Planning(cv::Mat goal_pose, Map* pMap){
@@ -14,6 +28,16 @@ Planning::Planning(cv::Mat goal_pose, Map* pMap){
 
     q_start = {0, 0, 0};
     q_goal = {5.03, -1.69, -1.5707};
+
+    T_sw<<0,   -1.0000,         0,    -0.1000,
+    0,         0,   -1.0000,         0,
+    1.0000,         0,         0,   -0.2500,
+    0,         0,        0,    1.0000;
+
+    T_bc <<0 ,        0 ,   1.0000 ,   0.2500 ,
+        -1.0000 ,        0  ,       0 ,  -0.1000,
+        0 ,  -1.0000 ,        0  ,       0,
+        0 ,        0  ,       0   , 1.0000;
     
     pl = new plan_slam();
   
@@ -32,6 +56,7 @@ void Planning::Run() {
             maxDist.clear();
             minDist.clear();
             foundRatio.clear();
+            keyframePose.clear();
 
             // update map here
             // 1. access to the map
@@ -62,6 +87,22 @@ void Planning::Run() {
                     minDist.push_back(double(vpPts[i]->GetMinDistanceInvariance()));
                     foundRatio.push_back(double(vpPts[i]->GetFoundRatio()));
                 }
+
+                vector<KeyFrame*> vpKfs = mpMap->GetAllKeyFrames();
+                for(size_t i=0; i<vpKfs.size(); i++){
+                        if(vpKfs[i]->isBad()){
+                            continue;
+                        }
+                        Eigen::Matrix4f T_sc = Converter::toMatrix4f(vpKfs[i]->GetPoseInverse());
+                        T_wb = T_sw.inverse()*T_sc*T_bc.inverse();                        
+                        std::vector<double> kfpose;
+                        kfpose.push_back(double(T_wb(0,3)));
+                        kfpose.push_back(double(T_wb(1,3)));
+                        Eigen::Vector3f eulerAngleKf = T_wb.topLeftCorner<3,3>().eulerAngles(2,1,0);
+                        kfpose.push_back(double(eulerAngleKf(0)));
+                        keyframePose.push_back(kfpose);
+                    }
+
             }
 
             //std::cout << planningMap.size() << std::endl;
@@ -85,8 +126,28 @@ void Planning::Run() {
                     x_rand = double(rand())/double(RAND_MAX)*2*x_var - x_var + q_start[0];
                     y_rand = double(rand())/double(RAND_MAX)*2*y_var - y_var + q_start[1];
                     theta_rand = double(rand())/double(RAND_MAX)*2*theta_var - theta_var + q_start[2];
+
+                    std::vector<double> kfAngles;
+                    // get the keyframes around this random point
+                    for (int i = 0; i < keyframePose.size(); i++){
+                        if(abs(x_rand - keyframePose[i][0])>x_var || abs(y_rand - keyframePose[i][1])>y_var)
+                            continue;
+                        kfAngles.push_back(keyframePose[i][2]);
+                    }
+
+                    double kfAngles_mean, kfAngles_std;
+
+                    if(kfAngles.size()>0){
+                        compute_std(kfAngles, kfAngles_mean, kfAngles_std);
+                        double angleThres = (kfAngles_std>(10/57.3)) ? kfAngles_std : 10/57.3;
+                        if(abs(theta_rand - kfAngles_mean)<angleThres)
+                            continue;
+                    }
+
+
                     if(abs(theta_rand - q_start[2])<(15/57.3))
                         continue;
+
                     q_curr_goal = {x_rand, y_rand, theta_rand};
                     threshold = threshold_explore;
                     pl->set_featureThreshold(threshold);
@@ -103,13 +164,13 @@ void Planning::Run() {
             current_trajectory.clear();
             current_trajectory = pl->get_path_matrix();
 
-            
+            /*
             cout << q_start[0] << " "  << q_start[1] << " " << q_start[2] << endl;            
             for (int k = 0; k < current_trajectory.size(); k++) {
                 cout << current_trajectory[k][0] << " "  << current_trajectory[k][1] << " " << current_trajectory[k][2] << endl;
             }
             cout << q_goal[0] << " "  << q_goal[1] << " " << q_goal[2] << endl;   
-                                 
+            */                   
 
             // check the point when the visibility constrain is not satisfied
             int nxt_start = pl->AdvanceStepCamera(current_trajectory, threshold);

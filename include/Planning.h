@@ -14,6 +14,10 @@
 #include "KeyFrame.h"
 #include "ORBextractor.h"
 #include "Map.h"
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include "Converter.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -62,6 +66,11 @@ private:
 	Vector maxDist;
 	Vector minDist;
 	Vector foundRatio;
+
+	std::vector<std::vector<double>> keyframePose;
+	Eigen::Matrix4f T_sw;
+	Eigen::Matrix4f T_bc;
+	Eigen::Matrix4f T_wb;
 	
 	float theta_interval;
 	
