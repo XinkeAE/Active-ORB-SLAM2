@@ -28,6 +28,7 @@ Planning::Planning(cv::Mat goal_pose, Map* pMap){
 
     q_start = {0, 0, 0};
     q_goal = {5.03, -1.69, -1.5707};
+    //q_goal={3.5, 1.3, -1};
 
     T_sw<<0,   -1.0000,         0,    -0.1000,
     0,         0,   -1.0000,         0,
@@ -58,6 +59,8 @@ void Planning::Run() {
             foundRatio.clear();
             keyframePose.clear();
 
+            //cout << __LINE__ << endl;
+
             // update map here
             // 1. access to the map
             // 2. get the map points 
@@ -66,6 +69,8 @@ void Planning::Run() {
                 unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
                 vector<MapPoint*> vpPts = mpMap->GetAllMapPoints();
                 cout << "totally " << vpPts.size() << " points." << endl;
+                //cout << __LINE__ << endl;            
+                
                 for(size_t i=0; i<vpPts.size(); i++){
                     if(vpPts[i]->isBad())
                         continue;
@@ -74,8 +79,8 @@ void Planning::Run() {
                                                              vpPts[i]->GetWorldPos().at<float>(1),
                                                              vpPts[i]->GetWorldPos().at<float>(2)});
 
-                    if(vpPts[i]->theta_std * 2.5 < 5.0/57.3){
-                        theta_interval = 5.0/57.3;
+                    if(vpPts[i]->theta_std * 2.5 < 30.0/57.3){
+                        theta_interval = 30.0/57.3;
                     }else{
                         theta_interval = vpPts[i]->theta_std * 2.5;
                     }
@@ -87,7 +92,8 @@ void Planning::Run() {
                     minDist.push_back(double(vpPts[i]->GetMinDistanceInvariance()));
                     foundRatio.push_back(double(vpPts[i]->GetFoundRatio()));
                 }
-
+                //cout << __LINE__ << endl;            
+                
                 vector<KeyFrame*> vpKfs = mpMap->GetAllKeyFrames();
                 for(size_t i=0; i<vpKfs.size(); i++){
                         if(vpKfs[i]->isBad()){
@@ -103,30 +109,49 @@ void Planning::Run() {
                         keyframePose.push_back(kfpose);
                     }
 
-            }
+            }            
+
+            //cout << __LINE__ << endl;            
 
             //std::cout << planningMap.size() << std::endl;
 
-            int threshold = 25;
-            int threshold_explore = 15;
+            int threshold = 40;
+            int threshold_explore = 10;
+
+            cout << maxDist[0] << endl;
 
             pl->UpdateMap(planningMap, UB, LB, maxDist, minDist, foundRatio);
             pl->set_featureThreshold(threshold);
 
+            std::vector<double> q_curr_goal = q_goal;
+
+            //cout << __LINE__ << endl;            
+
             // exploration mode
+            /*
             double x_rand, y_rand, theta_rand;
-            double x_var = 2;
-            double y_var = 2;
+            //double x_var = (4.2 - 2.66);
+            double x_var = 2.5;
+            //double y_var = (5 - 0.5);
+            double y_var = 2.5;
             double theta_var = PI;
             std::vector<double> q_curr_goal = q_goal;
-            map_data MD_curr = {planningMap, UB, LB};
-            StateValidChecker svc(MD_curr, threshold_explore);
-            if(counter%2==0){
-                do{
-                    x_rand = double(rand())/double(RAND_MAX)*2*x_var - x_var + q_start[0];
+            map_data MD_curr = {planningMap, UB, LB, maxDist, minDist, foundRatio};
+            StateValidChecker svc(MD_curr, threshold_explore);         
+            if(counter%3==0 || counter%3==1){
+                do{                   
+                    x_rand = double(rand())/double(RAND_MAX)*2*x_var - x_var + q_start[0];                                        
                     y_rand = double(rand())/double(RAND_MAX)*2*y_var - y_var + q_start[1];
                     theta_rand = double(rand())/double(RAND_MAX)*2*theta_var - theta_var + q_start[2];
 
+                    //x_rand = double(rand())/double(RAND_MAX)*x_var + 2.66;
+                    //y_rand = double(rand())/double(RAND_MAX)*y_var + 0.5;
+
+                    //theta_rand = double(rand())/double(RAND_MAX)*theta_var;
+                     
+                    //theta_rand = atan2(q_goal[1] - y_rand, q_goal[0] - x_rand);
+
+                    
                     std::vector<double> kfAngles;
                     // get the keyframes around this random point
                     for (int i = 0; i < keyframePose.size(); i++){
@@ -139,7 +164,7 @@ void Planning::Run() {
 
                     if(kfAngles.size()>0){
                         compute_std(kfAngles, kfAngles_mean, kfAngles_std);
-                        double angleThres = (kfAngles_std>(10/57.3)) ? kfAngles_std : 10/57.3;
+                        double angleThres = ((kfAngles_std*2)>(20/57.3)) ? (kfAngles_std*2) : 20/57.3;
                         if(abs(theta_rand - kfAngles_mean)<angleThres)
                             continue;
                     }
@@ -149,21 +174,35 @@ void Planning::Run() {
                         continue;
 
                     q_curr_goal = {x_rand, y_rand, theta_rand};
+                    cout << "*************************" << endl;
+                    cout << "q_goal: x = " <<  q_curr_goal[2] << ", y = " << q_curr_goal[1] << endl;
+                    cout << "*************************" << endl;
+                                                        
                     threshold = threshold_explore;
+                                                        
                     pl->set_featureThreshold(threshold);
+                                                        
                 }while(svc.isValid(q_curr_goal));
-                counter = 1;
-            }
+                                                
+                if(counter%3==3)
+                    counter = 1;
+                //cout << "*************************" << endl;
+                //cout << "q_goal: x = " <<  q_curr_goal[0] << ", y = " << q_curr_goal[1] << endl;
+                //cout << "*************************" << endl;
+                                
+            }*/
 
-
+            //cout << __LINE__ << endl;
+            
             // do actual planning
-            pl->plan(q_start, q_goal, 2, p_type, o_type);
+            pl->plan(q_start, q_curr_goal, 5, p_type, o_type);
 
             counter ++;
             // save trajectory
             current_trajectory.clear();
             current_trajectory = pl->get_path_matrix();
-
+            //cout << __LINE__ << endl;
+            
             /*
             cout << q_start[0] << " "  << q_start[1] << " " << q_start[2] << endl;            
             for (int k = 0; k < current_trajectory.size(); k++) {
@@ -183,9 +222,12 @@ void Planning::Run() {
                 planned_trajectory.insert(planned_trajectory.end(), current_trajectory.begin(), current_trajectory.begin()+nxt_start);
                 trajectory_lock.unlock();
             }
-
+            //cout << __LINE__ << endl;
+            
             // Ack the request.
             AckRequest();
+            //cout << __LINE__ << endl;
+            
         }
     }
 }

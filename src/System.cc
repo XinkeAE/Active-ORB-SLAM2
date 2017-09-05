@@ -269,7 +269,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
-        if(!planStarted || (dist<0.2&&(!planRequestSent)) || mpTracker->recoverMode){
+        if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
             mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
             planRequestSent = true; 
             planStarted = true;
@@ -765,6 +765,10 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 std::vector<double> System::getCurrWaypoint()
 {
     return mpTracker->curr_des;
+}
+
+int System::getExplorationStatus(){
+    return mpTracker->explore;
 }
 
 } //namespace ORB_SLAM

@@ -56,8 +56,8 @@ using namespace std;
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub, ros::Publisher octoPub, ros::Publisher destPub, ros::Publisher lostPub)
-                :mpSLAM(pSLAM),posePublisher(posePub),octomapPublisher(octoPub),currDestPublisher(destPub), trackingLostPublisher(lostPub)
+    ImageGrabber(ORB_SLAM2::System* pSLAM, ros::Publisher& posePub, ros::Publisher octoPub, ros::Publisher destPub, ros::Publisher lostPub, ros::Publisher explorePub, ros::Publisher dirPub)
+                :mpSLAM(pSLAM),posePublisher(posePub),octomapPublisher(octoPub),currDestPublisher(destPub), trackingLostPublisher(lostPub), explorationPublisher(explorePub), directionPublisher(dirPub)
     {
         T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
                                                -1, 0, 0, -0.1, // -0.1,//-0.1,
@@ -104,6 +104,8 @@ public:
     ros::Publisher octomapPublisher;
     ros::Publisher currDestPublisher;
     ros::Publisher trackingLostPublisher;
+    ros::Publisher explorationPublisher;
+    ros::Publisher directionPublisher;
 };
 
 int main(int argc, char **argv)
@@ -135,8 +137,10 @@ int main(int argc, char **argv)
     ros::Publisher octo_pub = nh.advertise<octomap_msgs::Octomap>( "octomap_3d", 1 );
     ros::Publisher dest_pub = nh.advertise<geometry_msgs::Pose2D> ("planning/data", 1);
     ros::Publisher lost_pub = nh.advertise<std_msgs::Bool> ("/orb/lost", 1);
+    ros::Publisher expr_pub = nh.advertise<std_msgs::Bool> ("/orb/expr", 1);
+    ros::Publisher dir_pub = nh.advertise<std_msgs::Bool> ("/orb/dir", 1);
 
-    ImageGrabber igb(&SLAM, pose_pub, octo_pub, dest_pub, lost_pub);
+    ImageGrabber igb(&SLAM, pose_pub, octo_pub, dest_pub, lost_pub, expr_pub, dir_pub);
 
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
 
@@ -288,6 +292,19 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
             posePublisher.publish(pose_out_);
 
             std::vector<double> curr_dest = mpSLAM->getCurrWaypoint();
+
+            int exprStatus = mpSLAM->getExplorationStatus();
+
+            if(exprStatus == 0){
+                explorationPublisher.publish(false);
+            }else{
+                explorationPublisher.publish(true);
+                if(exprStatus == 1){
+                    directionPublisher.publish(false);
+                }else if(exprStatus == -1){
+                    directionPublisher.publish(true);
+                }
+            }
 
             if(curr_dest.size() > 0){
                 dest_out_.x = float(curr_dest[0]);

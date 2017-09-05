@@ -15,7 +15,7 @@ camera::camera(map_data MD, int thres)
     MaxY = 520;
     MinY = 20;
     max_dist = 6;
-    min_dist = 0.3;
+    min_dist = 0.5;
 
     feature_threshold = thres;
 
@@ -115,18 +115,19 @@ int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
             (float)(sin(theta_rad_w)), (float)cos(theta_rad_w), 0, y_w,
             0,         0,         1,   0,
             0,         0,        0,    1.0000;
-
+            
     Eigen::Matrix4f T_sc = T_sw * T_wb * T_bc;
     Eigen::Matrix4f T_cs = T_sc.inverse();
-
+      
     if (1) {//setRobotPose(x_w, y_w, theta_rad_w)) {
         
         for (int i = 0; i < num_pt; ++i)
         {
-            proj_info mpProjection;
-            mpProjection = isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs, max_range[i], min_range[i]);
-            if(mpProjection.success)
+            proj_info mpProjection;         
+            mpProjection = isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs, max_range[i], min_range[i]);                      
+            if(mpProjection.success){                              
                 num_visible+=foundRatio[i];
+            }
         }
     }   
     else
@@ -136,7 +137,7 @@ int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
     return int(round(num_visible));
 }
 
-/*
+
 int camera::countVisible(cv::Mat Twb) const {
     int num_pt=map_vec.size();
     float num_visible=0;
@@ -165,34 +166,35 @@ int camera::countVisible(cv::Mat Twb) const {
         std::cout<<"Cannot get current robot pose"<<std::endl;
     } 
     return int(round(num_visible));
-}*/
+}
 
+/*
 visible_info camera::countVisible(cv::Mat Twb) const {
-
+    
     int num_pt=map_vec.size();
     float num_visible=0;
-
+    
     visible_info visibilityInfo;
     visibilityInfo.gridInfo.setZero();
-
+    
     //cout << x_w << " " << y_w << " " << theta_rad_w << endl;
 
     // I modified this section to enable the function to be const. (requirement of OMPL)
     Eigen::Matrix<float, 4,4> T_wb;
     cv2eigen(Twb, T_wb);
-
+    
     Eigen::Matrix4f T_sc = T_sw * T_wb * T_bc;
     Eigen::Matrix4f T_cs = T_sc.inverse();
-
+    
     if (1) {//setRobotPose(x_w, y_w, theta_rad_w)) {
         
         for (int i = 0; i < num_pt; ++i)
         {   
             proj_info mpProjection;
             mpProjection = isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs, max_range[i], min_range[i]);
-            if(mpProjection.success){
-                num_visible+=foundRatio[i];
-                visibilityInfo.gridInfo(mpProjection.y_grid, mpProjection.x_grid) += foundRatio[i];
+            if(mpProjection.success){                
+                num_visible+=foundRatio[i];                
+                visibilityInfo.gridInfo(mpProjection.y_grid, mpProjection.x_grid) += foundRatio[i];                
             }
                 
         }
@@ -206,7 +208,7 @@ visible_info camera::countVisible(cv::Mat Twb) const {
 
     return visibilityInfo;
 
-}
+}*/
 
 bool camera::IsStateVisiblilty(double x_w, double y_w, double theta_rad_w, int ths) {
     	int cur_ths;
@@ -230,18 +232,18 @@ std::vector<int> camera::posInGrid(float u, float v) const{
 
 
 proj_info camera::isInFrustum(std::vector<float> MapPoint_s, float upper_limit, float lower_limit, Eigen::Matrix4f T_sc, Eigen::Matrix4f T_cs, float max_range, float min_range) const {
-    
+     
         //convert map points into carmera frame
-        Eigen::Matrix<float, 4, 1> map_point_s(MapPoint_s.data());
-        map_point_s(3,0) = 1;
+        Eigen::Matrix<float, 4, 1> map_point_s(MapPoint_s.data());        
+        map_point_s(3,0) = 1;    
         Eigen::Matrix<float, 4, 1> map_point_c=T_cs*map_point_s; 
-
+         
         float PcX = map_point_c(0,0);
         float PcY= map_point_c(1,0);
         float PcZ = map_point_c(2,0);
 
         proj_info map_projection;
-
+         
         // step 1: rule out the points with depth smaller than 0.05
         if(PcZ<0.05)
             return map_projection;
@@ -249,7 +251,7 @@ proj_info camera::isInFrustum(std::vector<float> MapPoint_s, float upper_limit, 
         float inv_z = 1.0f/PcZ;
         float u=fx*PcX*inv_z+cx;
         float v=fy*PcY*inv_z+cy;
-        
+         
 
         if(u<MinX || u>MaxX)    
             return map_projection;
@@ -270,15 +272,15 @@ proj_info camera::isInFrustum(std::vector<float> MapPoint_s, float upper_limit, 
         float delta_x_s=map_point_s(0,0)-T_sc(0,3);
         float delta_z_s=map_point_s(2,0)-T_sc(2,3);
         float theta_robot_s=atan2(delta_x_s,delta_z_s);
-        
+                 
         if(theta_robot_s<lower_limit || theta_robot_s>upper_limit)
             return map_projection;
-
+         
         map_projection.success = true;
         std::vector<int>pos_xy = posInGrid(u,v);
         map_projection.x_grid = pos_xy[0];
         map_projection.y_grid = pos_xy[1];
-
+         
         return map_projection;
     
 }

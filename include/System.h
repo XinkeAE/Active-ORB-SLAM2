@@ -146,6 +146,8 @@ public:
 
     std::vector<double> getCurrWaypoint();
 
+    int getExplorationStatus();
+
 private:
 
     // Input sensor

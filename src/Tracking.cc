@@ -254,9 +254,20 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         currPose = T_wb_initial_mat.inv()*T_wb_mat;
         checkWayPoint();
 
+        
+        if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty()){
+            
+            computeExplorationMode();
+            
+        }else{
+            exploreStart = false;
+            exploreEnd = false;
+        }
+
     }
 
     // recover from the LOST state
+    /*
     if(mState==LOST){
         recoverCounter++;
         if(recoverCounter > 100){
@@ -272,7 +283,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         recoverCounter = 0;
         recoverMode = false;
         //cout << "not in recover mode" << endl;
-    }
+    }*/
 
 
     return mCurrentFrame.mTcw.clone();
@@ -1076,23 +1087,33 @@ bool Tracking::TrackLocalMap()
         }
     //}
 
-    camera camera_model(MD);
+    
 
+    camera camera_model(MD,20);
+
+    
+    
     
     // compute the pose in the body frame
     if(!mCurrentFrame.mTcw.empty()){
+        
+        
         cv::Mat Tsc = mCurrentFrame.mTcw.clone().inv();
         cv::Mat T_wb_mat = cv::Mat(T_ws_mat*Tsc*T_cb_mat);
         
+        
         cv::Mat Twb_cam = T_wb_initial_mat.inv()*T_wb_mat;
+        
+        
+        //visible_info VI;
+        int visible_pts;
+        visible_pts = camera_model.countVisible(Twb_cam);
 
-        visible_info VI;
-        VI = camera_model.countVisible(Twb_cam);
-
-        cout << "number of points predicted = " << VI.number << endl;
+        cout << "number of points predicted = " << visible_pts << endl;
     }
+    
     */
-
+    
     // Decide if the tracking was succesful
     // More restrictive if there was a relocalization recently
     if(mCurrentFrame.mnId<mnLastRelocFrameId+mMaxFrames && mnMatchesInliers<30)
@@ -1759,6 +1780,138 @@ bool Tracking::checkWayPoint()
     return false;
 
 }
+
+bool Tracking::computeExplorationMode(){
+
+        
+    if(mCurrentFrame.mvpMapPoints.size() == 0)
+        return false;
+
+    featureCenter = 0;
+    int featureCounter = 0;
+
+
+    // compute the center of projected map points
+    for(size_t i = 0; i < mCurrentFrame.mvpMapPoints.size(); i++){
+        if(mCurrentFrame.mvpMapPoints[i]!=NULL){
+            featureCenter += mCurrentFrame.mvpMapPoints[i]->mTrackProjX;
+            featureCounter++;
+        }
+    }
+
+    
+    
+
+    featureCenter = featureCenter/featureCounter;
+    Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
+    Eigen::Vector3f eulerAngleKf = T_wb_eig.topLeftCorner<3,3>().eulerAngles(0,1,2);
+    //float curr_angle=float(eulerAngleKf(2));
+    float curr_angle = atan2(T_wb_eig(0,1), T_wb_eig(0,0));
+
+   // cout << "Feature center: " << featureCenter << endl;
+
+    
+    
+
+    // determine turn right or left, and when to stop
+    if(!exploreStart){
+        if(featureCenter > 480){
+            explore = 1;
+
+        }else{
+            explore = -1;
+        }
+        exploreStart = true;
+        explore_star_angle=curr_angle;
+        exploreEnd=false;
+    }
+
+    
+    
+
+    float angle_diff=curr_angle-explore_star_angle;
+    if(angle_diff>M_PI)
+    {
+        angle_diff=angle_diff-2*M_PI;
+    }
+    else if(angle_diff<-M_PI)
+    {
+        angle_diff=angle_diff+2*M_PI;
+    }
+    angle_diff=fabs(angle_diff);
+    cout<<"current "<<curr_angle<<" star "<<explore_star_angle<<" angle_diff = "<<angle_diff<<" num feature "<<featureCounter<< endl;
+    if(!exploreEnd)
+    {
+        if(featureCounter<20)
+        {
+            exploreEnd=true;
+            explore=-explore;
+            explore_stop_diff=angle_diff;
+            cout<<"!!!!!!!!!!!!!!!!!!!num feature "<<featureCounter<< endl;
+        }
+        /*
+        else if (explore==1) // negative z
+        {
+            if(explore_star_angle<=-M_PI/2)
+            {
+                if(curr_angle<(1.5*M_PI/2+explore_star_angle))
+                {
+                    exploreEnd=true;
+                    explore=-explore;
+                    explore_stop_angle=curr_angle;
+                }
+            }else{
+                if(curr_angle<(explore_star_angle-M_PI/2))
+                {
+                    exploreEnd=true;
+                    explore=-explore;
+                    explore_stop_angle=curr_angle;
+                }
+            }
+        }else if(explore==-1)
+        {
+            if(explore_star_angle<M_PI/2)
+            {
+                if(curr_angle>(M_PI/2+explore_star_angle))
+                {
+                    exploreEnd=true;
+                    explore=-explore;
+                    explore_stop_angle=curr_angle;
+                }
+            }else
+            {
+                if(curr_angle>(explore_star_angle-1.5*M_PI))
+                {   
+                    exploreEnd=true;
+                    explore=-explore;
+                    explore_stop_angle=curr_angle;
+                }
+            }
+        }*/
+        else if(angle_diff>M_PI/2)
+        {
+            exploreEnd=true;
+            explore=-explore;
+            explore_stop_diff=angle_diff;
+            cout<<"!!!!!!!!!!!!!!!!!angle_diff = "<<angle_diff<<endl;
+        }
+    }
+    if(exploreEnd)
+    {
+        cout<<"angle_diff = "<<angle_diff<<endl;
+        if(angle_diff<explore_stop_diff/40)
+        {
+            explore=0;
+        }
+
+    }
+ }
+
+
+
+
+    // return back to the middle 
+
 
 bool Tracking::checkWayPointRecover(){
     // get rid of all the following way points

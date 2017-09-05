@@ -24,6 +24,7 @@
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
+#include<math.h>
 
 #include"Viewer.h"
 #include"FrameDrawer.h"
@@ -155,6 +156,15 @@ public:
     int path_it_counter=1;
 
     bool checkWayPoint();
+
+    // exploration mode 0: not in exploration mode; -1: explore left; 1: explore right
+    int explore = 0 ;
+    bool exploreStart = false;
+    bool exploreEnd = true;
+    bool computeExplorationMode();
+    float featureCenter = 480;
+    float explore_star_angle;
+    float explore_stop_diff;
 
     bool recoverMode = false;
     size_t recoverCounter = 0;

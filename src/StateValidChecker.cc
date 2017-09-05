@@ -75,17 +75,22 @@ bool StateValidChecker::isValid(const ob::State *state) {
 bool StateValidChecker::isValid(Vector q) {
 
 	if (!check_collisions(q, robot_r))
+	{ 
 		return false;
+	}
 
 	/** Check all constraints (collisions and number of features) */
 	if (!heuristicValidityCheck) {
+		
 		return IsStateVisiblilty(q[0], q[1], q[2]);
 	}
 	/** Check number of features above a threshold only for states with distance maxDistHeuristicValidity
 	 * from the start (only [x y] distance	 */
 	else {
-		if ( (q[0]-StartState[0])*(q[0]-StartState[0]) + (q[1]-StartState[1])*(q[1]-StartState[1]) < maxDistHeuristicValidity*maxDistHeuristicValidity )
-			return IsStateVisiblilty(q[0], q[1], q[2]);
+		
+		if ( (q[0]-StartState[0])*(q[0]-StartState[0]) + (q[1]-StartState[1])*(q[1]-StartState[1]) < maxDistHeuristicValidity*maxDistHeuristicValidity ){
+						return IsStateVisiblilty(q[0], q[1], q[2]);
+		}
 		else
 			return true;
 	}
@@ -504,7 +509,7 @@ double StateValidChecker::MotionCostLength(ppMatrix Q) const {
 double StateValidChecker::MotionCostCamera(ppMatrix Q) const {
 
 	double C = 0;
-	for (int i = 1; i < Q.size(); i++) {
+	for (int i = 1; i < Q.size()-1; i++) {
 		//cout << Q[i][0] << " " << Q[i][1] << " " << Q[i][2] << endl;
 
 		int c = countVisible(Q[i][0], Q[i][1], Q[i][2]);

@@ -30,7 +30,7 @@ typedef KDTreeVectorOfVectorsAdaptor< ppMatrix, double > my_kd_tree_t;
 #define MIN_X -1.15
 #define MAX_X 6.5
 #define MIN_Y -5
-#define MAX_Y 2
+#define MAX_Y 5
 
 using namespace std;
 using namespace nanoflann;
