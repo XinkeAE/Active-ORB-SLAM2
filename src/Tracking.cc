@@ -255,7 +255,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         checkWayPoint();
 
         
-        if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty()){
+        if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty() &&!goalDetected){
             
             computeExplorationMode();
             
@@ -1799,19 +1799,34 @@ bool Tracking::computeExplorationMode(){
         }
     }
 
-    
-    
-
     featureCenter = featureCenter/featureCounter;
     Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
     Eigen::Vector3f eulerAngleKf = T_wb_eig.topLeftCorner<3,3>().eulerAngles(0,1,2);
     //float curr_angle=float(eulerAngleKf(2));
-    float curr_angle = atan2(T_wb_eig(0,1), T_wb_eig(0,0));
+    float curr_angle = atan2(T_wb_eig(1,0), T_wb_eig(0,0));
+    float curr_x = currPose.at<float>(0,3);
+    float curr_y = currPose.at<float>(1,3);
 
-   // cout << "Feature center: " << featureCenter << endl;
+    // todo: if in the exploration mode, the goal position can be seen, then we just stop exploration and go!
+    // check the distance between current position and the goal position
+    // check the angle between current position and goal position
+    // check the occlusion by raycasting
+    // check if the angle is reachable
+    float goal_x = 5.03;
+    float goal_y = 1.69;
+    float goal_theta = -1.57;
 
-    
-    
+    if((curr_x > 4.5)&&((fabs(goal_theta - curr_angle) < 0.5))){
+        goalDetected = true;
+        explore = 0;
+        path_it_counter++;
+        planned_trajectory.pop_back();
+        planned_trajectory.push_back({curr_x, curr_y, curr_angle});
+        return true;
+    }
+
+
+
 
     // determine turn right or left, and when to stop
     if(!exploreStart){
@@ -1824,10 +1839,8 @@ bool Tracking::computeExplorationMode(){
         exploreStart = true;
         explore_star_angle=curr_angle;
         exploreEnd=false;
+        explore_reverse=false;
     }
-
-    
-    
 
     float angle_diff=curr_angle-explore_star_angle;
     if(angle_diff>M_PI)
@@ -1839,67 +1852,67 @@ bool Tracking::computeExplorationMode(){
         angle_diff=angle_diff+2*M_PI;
     }
     angle_diff=fabs(angle_diff);
-    cout<<"current "<<curr_angle<<" star "<<explore_star_angle<<" angle_diff = "<<angle_diff<<" num feature "<<featureCounter<< endl;
+
+    cout<<"Angle_diff "<<angle_diff<<" num "<<featureCounter<<endl;
+    
+    //cout<<"current "<<curr_angle<<" star "<<explore_star_angle<<" angle_diff = "<<angle_diff<<" num feature "<<featureCounter<< endl;
     if(!exploreEnd)
     {
-        if(featureCounter<20)
+        cout<<"is checking"<<endl;
+        if(featureCounter<130)
         {
+           // cout<<"feature low"<<endl;
             exploreEnd=true;
+            explore_reverse=false;
             explore=-explore;
             explore_stop_diff=angle_diff;
-            cout<<"!!!!!!!!!!!!!!!!!!!num feature "<<featureCounter<< endl;
+            //cout<<"!!!!!!!!!!!!!!!!!!!num feature "<<featureCounter<< endl;
         }
-        /*
-        else if (explore==1) // negative z
-        {
-            if(explore_star_angle<=-M_PI/2)
-            {
-                if(curr_angle<(1.5*M_PI/2+explore_star_angle))
-                {
-                    exploreEnd=true;
-                    explore=-explore;
-                    explore_stop_angle=curr_angle;
-                }
-            }else{
-                if(curr_angle<(explore_star_angle-M_PI/2))
-                {
-                    exploreEnd=true;
-                    explore=-explore;
-                    explore_stop_angle=curr_angle;
-                }
-            }
-        }else if(explore==-1)
-        {
-            if(explore_star_angle<M_PI/2)
-            {
-                if(curr_angle>(M_PI/2+explore_star_angle))
-                {
-                    exploreEnd=true;
-                    explore=-explore;
-                    explore_stop_angle=curr_angle;
-                }
-            }else
-            {
-                if(curr_angle>(explore_star_angle-1.5*M_PI))
-                {   
-                    exploreEnd=true;
-                    explore=-explore;
-                    explore_stop_angle=curr_angle;
-                }
-            }
-        }*/
-        else if(angle_diff>M_PI/2)
+        else if(angle_diff>0.9*M_PI)
         {
             exploreEnd=true;
+            explore_reverse=false;
             explore=-explore;
             explore_stop_diff=angle_diff;
-            cout<<"!!!!!!!!!!!!!!!!!angle_diff = "<<angle_diff<<endl;
+           // cout<<"!!!!!!!!!!!!!!!!!angle_diff = "<<angle_diff<<endl;
         }
     }
-    if(exploreEnd)
+    
+    if(exploreEnd && !explore_reverse)
     {
-        cout<<"angle_diff = "<<angle_diff<<endl;
-        if(angle_diff<explore_stop_diff/40)
+        //cout<<"reverse"<<endl;
+       // cout<<"angle_diff = "<<angle_diff<<endl;
+        if(angle_diff<explore_stop_diff/80)
+        {
+            exploreEnd=false;
+            explore_reverse=true;
+        }
+
+    }
+    if(!exploreEnd && explore_reverse)
+    {
+        if(featureCounter<130)
+        {
+            exploreEnd=true;
+            //explore_reverse=false;
+            explore=-explore;
+            explore_stop_diff=angle_diff;
+            //cout<<"!!!!!!!!!!!!!!!!!!!num feature "<<featureCounter<< endl;
+        }
+        else if(angle_diff>M_PI*0.9)
+        {
+            exploreEnd=true;
+            //explore_reverse=false;
+            explore=-explore;
+            explore_stop_diff=angle_diff;
+           // cout<<"!!!!!!!!!!!!!!!!!angle_diff = "<<angle_diff<<endl;
+        }
+    }
+    if(exploreEnd && explore_reverse)
+    //if(exploreEnd)
+    {
+       // cout<<"angle_diff = "<<angle_diff<<endl;
+        if(angle_diff<explore_stop_diff/80)
         {
             explore=0;
         }

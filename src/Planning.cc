@@ -115,7 +115,7 @@ void Planning::Run() {
 
             //std::cout << planningMap.size() << std::endl;
 
-            int threshold = 40;
+            int threshold = 50;
             int threshold_explore = 10;
 
             cout << maxDist[0] << endl;
@@ -193,6 +193,17 @@ void Planning::Run() {
             }*/
 
             //cout << __LINE__ << endl;
+
+            // if the goal is detected, just go for it!
+            if(!currPose.empty()){
+                // reset the start
+                float x_curr = currPose.at<float>(0,3);
+                float y_curr = currPose.at<float>(1,3);
+                Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
+                float curr_angle = atan2(T_wb_eig(1,0), T_wb_eig(0,0));
+                q_start = {x_curr, y_curr, curr_angle};
+                planned_trajectory.pop_back();
+            }
             
             // do actual planning
             pl->plan(q_start, q_curr_goal, 5, p_type, o_type);
@@ -208,8 +219,9 @@ void Planning::Run() {
             for (int k = 0; k < current_trajectory.size(); k++) {
                 cout << current_trajectory[k][0] << " "  << current_trajectory[k][1] << " " << current_trajectory[k][2] << endl;
             }
-            cout << q_goal[0] << " "  << q_goal[1] << " " << q_goal[2] << endl;   
-            */                   
+            cout << q_goal[0] << " "  << q_goal[1] << " " << q_goal[2] << endl;  
+            */ 
+                               
 
             // check the point when the visibility constrain is not satisfied
             int nxt_start = pl->AdvanceStepCamera(current_trajectory, threshold);

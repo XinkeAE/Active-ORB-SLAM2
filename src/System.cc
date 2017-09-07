@@ -264,21 +264,52 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     if (!currPose.empty()){
         x_curr = currPose.at<float>(0,3);
         y_curr = currPose.at<float>(1,3);
+        Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
+        float curr_angle = atan2(T_wb_eig(1,0), T_wb_eig(0,0));
+        
 
         float dist = sqrt((x_curr - x_end)*(x_curr - x_end) + (y_curr - y_end)*(y_curr - y_end));
 
+        float goal_x = 5.03;
+        float goal_y = 1.69;
+        float goal_theta = -1.57;
+        
+        float dist_goal = sqrt((x_curr - goal_x)*(x_curr - goal_x) + (y_curr - goal_y)*(y_curr - goal_y));
+        float theta_diff_goal = curr_angle - goal_theta;
+        if(theta_diff_goal>M_PI)
+        {
+            theta_diff_goal=theta_diff_goal-2*M_PI;
+        }
+        else if(theta_diff_goal<-M_PI)
+        {
+            theta_diff_goal=theta_diff_goal+2*M_PI;
+        }        
+
+        bool goal_reached = (dist_goal < 0.15)&&(fabs(theta_diff_goal)<0.5);
+
+        std::vector<std::vector<double>> planned_trajectory;
+
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
-        if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
-            mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
+        if(!mpTracker->goalDetected){
+            if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
+                mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
+                planRequestSent = true; 
+                planStarted = true;
+                //cout << "********************" << endl;
+                //cout << __LINE__ << endl;
+                //cout << "********************" << endl;
+            }
+
+            planned_trajectory = mpPlanner->GetPlanningTrajectory();
+
+        }else if(!planRequestSent){
+
+            mpPlanner->SendPlanningRequest(currPose, nullptr);
             planRequestSent = true; 
-            planStarted = true;
-            //cout << "********************" << endl;
-            //cout << __LINE__ << endl;
-            //cout << "********************" << endl;
+            planned_trajectory = mpPlanner->GetPlanningTrajectory();
+
         }
-        std::vector<std::vector<double>> planned_trajectory =
-        mpPlanner->GetPlanningTrajectory();
 
 
         /*

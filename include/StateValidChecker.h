@@ -25,7 +25,7 @@ using namespace std;
 
 #define PI 3.1416
 
-#define ROBOT_RADIUS 0.35
+#define ROBOT_RADIUS 0.5
 #define TURN_RADIUS 0.25
 #define DT 0.3
 #define MAX_DIST_HEURISTIC 2

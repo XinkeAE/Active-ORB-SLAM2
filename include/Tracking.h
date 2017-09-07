@@ -160,7 +160,8 @@ public:
     // exploration mode 0: not in exploration mode; -1: explore left; 1: explore right
     int explore = 0 ;
     bool exploreStart = false;
-    bool exploreEnd = true;
+    bool exploreEnd = false;
+    bool explore_reverse=false;
     bool computeExplorationMode();
     float featureCenter = 480;
     float explore_star_angle;
@@ -170,6 +171,8 @@ public:
     size_t recoverCounter = 0;
     size_t waypointCounter = 0;
     bool checkWayPointRecover();
+
+    bool goalDetected = false;
     
     
     
