@@ -161,6 +161,7 @@ public:
     int explore = 0 ;
     bool exploreStart = false;
     bool exploreEnd = false;
+    bool exploreFinish = false;
     bool explore_reverse=false;
     bool computeExplorationMode();
     float featureCenter = 480;

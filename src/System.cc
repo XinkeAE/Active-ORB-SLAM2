@@ -292,7 +292,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
         if(!mpTracker->goalDetected){
-            if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
+            if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0 && mpTracker->exploreFinish)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
                 mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
                 planRequestSent = true; 
                 planStarted = true;
@@ -303,12 +303,13 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
             planned_trajectory = mpPlanner->GetPlanningTrajectory();
 
-        }else if(!planRequestSent){
+        }else{
 
-            mpPlanner->SendPlanningRequest(currPose, nullptr);
-            planRequestSent = true; 
-            planned_trajectory = mpPlanner->GetPlanningTrajectory();
-
+            if(!planRequestSent&&(!goal_reached)){
+                mpPlanner->SendPlanningRequest(currPose, nullptr);
+                planRequestSent = true; 
+            }
+            planned_trajectory = mpPlanner->GetPlanningTrajectory();          
         }
 
 
@@ -331,6 +332,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             x_end = planned_trajectory.back()[0];
             y_end = planned_trajectory.back()[1];
             mpTracker->planned_trajectory = planned_trajectory;
+            mpTracker->exploreFinish = false;
             planRequestSent = false;
             //cout << "********************" << endl;
             //cout << __LINE__ << endl;

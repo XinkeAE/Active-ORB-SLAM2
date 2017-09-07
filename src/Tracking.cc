@@ -255,15 +255,15 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         checkWayPoint();
 
         
-        if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty() &&!goalDetected){
+        if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty() &&!goalDetected && !exploreFinish){
             
             computeExplorationMode();
             
-        }else{
+        }/*else{
             exploreStart = false;
             exploreEnd = false;
             explore_reverse = false;
-        }
+        }*/
 
     }
 
@@ -1842,6 +1842,7 @@ bool Tracking::computeExplorationMode(){
         explore_star_angle=curr_angle;
         exploreEnd=false;
         explore_reverse=false;
+        exploreFinish = false;
     }
 
     float angle_diff=curr_angle-explore_star_angle;
@@ -1855,14 +1856,14 @@ bool Tracking::computeExplorationMode(){
     }
     angle_diff=fabs(angle_diff);
 
-    cout<<"Angle_diff "<<angle_diff<<" num "<<featureCounter<<endl;
+    //cout<<"Angle_diff "<<angle_diff<<" num "<<featureCounter<<endl;
 
     explore_stop_diff = 5/57.3;
     
     // exploration toward the first point
     if(!exploreEnd && !explore_reverse)
     {
-        cout<<"is checking"<<endl;
+        //cout<<"is checking"<<endl;
         if( (featureCounter<130) || (angle_diff>0.9*M_PI) )
         {
            // cout<<"feature low"<<endl;
@@ -1908,6 +1909,7 @@ bool Tracking::computeExplorationMode(){
             exploreStart = false;
             exploreEnd = false;
             explore_reverse = false;
+            exploreFinish = true;
         }
 
     }
