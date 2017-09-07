@@ -262,6 +262,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         }else{
             exploreStart = false;
             exploreEnd = false;
+            explore_reverse = false;
         }
 
     }
@@ -1819,13 +1820,14 @@ bool Tracking::computeExplorationMode(){
     if((curr_x > 4.5)&&((fabs(goal_theta - curr_angle) < 0.5))){
         goalDetected = true;
         explore = 0;
+        exploreStart = false;
+        exploreEnd = false;
+        explore_reverse=false;        
         path_it_counter++;
         planned_trajectory.pop_back();
         planned_trajectory.push_back({curr_x, curr_y, curr_angle});
         return true;
     }
-
-
 
 
     // determine turn right or left, and when to stop
@@ -1854,67 +1856,58 @@ bool Tracking::computeExplorationMode(){
     angle_diff=fabs(angle_diff);
 
     cout<<"Angle_diff "<<angle_diff<<" num "<<featureCounter<<endl;
+
+    explore_stop_diff = 5/57.3;
     
-    //cout<<"current "<<curr_angle<<" star "<<explore_star_angle<<" angle_diff = "<<angle_diff<<" num feature "<<featureCounter<< endl;
-    if(!exploreEnd)
+    // exploration toward the first point
+    if(!exploreEnd && !explore_reverse)
     {
         cout<<"is checking"<<endl;
-        if(featureCounter<130)
+        if( (featureCounter<130) || (angle_diff>0.9*M_PI) )
         {
            // cout<<"feature low"<<endl;
             exploreEnd=true;
             explore_reverse=false;
             explore=-explore;
-            explore_stop_diff=angle_diff;
+            //explore_stop_diff=angle_diff;
             //cout<<"!!!!!!!!!!!!!!!!!!!num feature "<<featureCounter<< endl;
-        }
-        else if(angle_diff>0.9*M_PI)
-        {
-            exploreEnd=true;
-            explore_reverse=false;
-            explore=-explore;
-            explore_stop_diff=angle_diff;
-           // cout<<"!!!!!!!!!!!!!!!!!angle_diff = "<<angle_diff<<endl;
         }
     }
     
+    // return back
     if(exploreEnd && !explore_reverse)
     {
         //cout<<"reverse"<<endl;
        // cout<<"angle_diff = "<<angle_diff<<endl;
-        if(angle_diff<explore_stop_diff/80)
+        if(angle_diff<explore_stop_diff)
         {
             exploreEnd=false;
             explore_reverse=true;
         }
 
     }
+
+    // exploration toward the second point
     if(!exploreEnd && explore_reverse)
     {
-        if(featureCounter<130)
+        if( (featureCounter<130) || (angle_diff>M_PI*0.9) )
         {
             exploreEnd=true;
-            //explore_reverse=false;
             explore=-explore;
-            explore_stop_diff=angle_diff;
-            //cout<<"!!!!!!!!!!!!!!!!!!!num feature "<<featureCounter<< endl;
-        }
-        else if(angle_diff>M_PI*0.9)
-        {
-            exploreEnd=true;
-            //explore_reverse=false;
-            explore=-explore;
-            explore_stop_diff=angle_diff;
-           // cout<<"!!!!!!!!!!!!!!!!!angle_diff = "<<angle_diff<<endl;
         }
     }
+
+    // return back
     if(exploreEnd && explore_reverse)
-    //if(exploreEnd)
     {
        // cout<<"angle_diff = "<<angle_diff<<endl;
-        if(angle_diff<explore_stop_diff/80)
+        if(angle_diff<explore_stop_diff)
         {
             explore=0;
+            // state return
+            exploreStart = false;
+            exploreEnd = false;
+            explore_reverse = false;
         }
 
     }

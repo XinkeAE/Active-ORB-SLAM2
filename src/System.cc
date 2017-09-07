@@ -266,7 +266,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         y_curr = currPose.at<float>(1,3);
         Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
         float curr_angle = atan2(T_wb_eig(1,0), T_wb_eig(0,0));
-        
+  
 
         float dist = sqrt((x_curr - x_end)*(x_curr - x_end) + (y_curr - y_end)*(y_curr - y_end));
 
