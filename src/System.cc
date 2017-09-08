@@ -291,7 +291,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
-        if(!mpTracker->goalDetected && !mpTracker->recover_success){
+        if(!mpTracker->goalDetected){
             if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0 && mpTracker->exploreFinish)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
                 mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
                 planRequestSent = true; 
@@ -317,7 +317,11 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         if (!planned_trajectory.empty() && (mpTracker->planned_trajectory.size()!=planned_trajectory.size()) ) {
             x_end = planned_trajectory.back()[0];
             y_end = planned_trajectory.back()[1];
-            mpTracker->planned_trajectory = planned_trajectory;
+            //mpTracker->planned_trajectory = planned_trajectory;
+            for (size_t planCopyIter = mpTracker->planned_trajectory.size(); planCopyIter < (planned_trajectory.size()); planCopyIter++ ){
+                std::vector<double> wayPoint = planned_trajectory[planCopyIter];
+                mpTracker->planned_trajectory.push_back(wayPoint);
+            }
             mpTracker->exploreFinish = false;
             mpTracker->goalDetected=false;
             mpTracker->recover_success=false;                        

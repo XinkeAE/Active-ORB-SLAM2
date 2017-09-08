@@ -280,12 +280,17 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
             float curr_x = currPose.at<float>(0,3);
             float curr_y = currPose.at<float>(1,3);
             if(path_it_counter<planned_trajectory.size()){
-                planned_trajectory.erase(planned_trajectory.begin() + path_it_counter, planned_trajectory.end());
+                auto it=planned_trajectory.begin() + path_it_counter;
+                for(it; it!=planned_trajectory.end();it++)
+                {
+                    *it={curr_x,curr_y,curr_angle};
+                }
+               // planned_trajectory.erase(planned_trajectory.begin() + path_it_counter - 1, planned_trajectory.end());
             }
             if(path_it_counter > 0){
-                planned_trajectory.push_back({curr_x,curr_y,curr_angle});
-                path_it_counter =planned_trajectory.size()-1;
-                curr_des = planned_trajectory[path_it_counter];
+                //planned_trajectory.push_back({curr_x,curr_y,curr_angle});
+                //path_it_counter =planned_trajectory.size()-1;
+                curr_des = {curr_x,curr_y,curr_angle};
 
                 mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
                 mpMapDrawer->SetCurrentPath(planned_trajectory);
