@@ -169,6 +169,7 @@ public:
     float explore_stop_diff;
 
     bool recoverMode = false;
+    bool recover_success=false;
     size_t recoverCounter = 0;
     size_t waypointCounter = 0;
     bool checkWayPointRecover();

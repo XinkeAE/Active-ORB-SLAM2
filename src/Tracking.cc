@@ -259,32 +259,46 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
             
             computeExplorationMode();
             
-        }/*else{
-            exploreStart = false;
-            exploreEnd = false;
-            explore_reverse = false;
-        }*/
+        }
 
     }
 
     // recover from the LOST state
-    /*
+    
     if(mState==LOST){
         recoverCounter++;
         if(recoverCounter > 100){
             recoverMode = true;
             cout << "start recover mode" << endl;
-            if(checkWayPointRecover()){
-                recoverCounter = 0;
-                recoverMode = false;
-            }
         }
     }else if (mState==OK)
     {
+        if(recoverMode)
+        {
+            cout<<"Recover Successfully"<<endl;
+            float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
+            float curr_x = currPose.at<float>(0,3);
+            float curr_y = currPose.at<float>(1,3);
+            if(path_it_counter<planned_trajectory.size()){
+                planned_trajectory.erase(planned_trajectory.begin() + path_it_counter, planned_trajectory.end());
+            }
+            if(path_it_counter > 0){
+                planned_trajectory.push_back({curr_x,curr_y,curr_angle});
+                path_it_counter =planned_trajectory.size()-1;
+                curr_des = planned_trajectory[path_it_counter];
+
+                mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+                mpMapDrawer->SetCurrentPath(planned_trajectory);
+                mpMapDrawer->SetCurrentCounter(path_it_counter);
+
+                recover_success=true;
+
+            }
+        }
         recoverCounter = 0;
         recoverMode = false;
         //cout << "not in recover mode" << endl;
-    }*/
+    }
 
 
     return mCurrentFrame.mTcw.clone();
@@ -1801,10 +1815,10 @@ bool Tracking::computeExplorationMode(){
     }
 
     featureCenter = featureCenter/featureCounter;
-    Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
-    Eigen::Vector3f eulerAngleKf = T_wb_eig.topLeftCorner<3,3>().eulerAngles(0,1,2);
+    //Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
+    //Eigen::Vector3f eulerAngleKf = T_wb_eig.topLeftCorner<3,3>().eulerAngles(0,1,2);
     //float curr_angle=float(eulerAngleKf(2));
-    float curr_angle = atan2(T_wb_eig(1,0), T_wb_eig(0,0));
+    float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
     float curr_x = currPose.at<float>(0,3);
     float curr_y = currPose.at<float>(1,3);
 

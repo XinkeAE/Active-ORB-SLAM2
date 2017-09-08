@@ -199,8 +199,8 @@ void Planning::Run() {
                 // reset the start
                 float x_curr = currPose.at<float>(0,3);
                 float y_curr = currPose.at<float>(1,3);
-                Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
-                float curr_angle = atan2(T_wb_eig(1,0), T_wb_eig(0,0));
+                //Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
+                float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
                 q_start = {x_curr, y_curr, curr_angle};
                 planned_trajectory.pop_back();
             }

@@ -264,8 +264,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     if (!currPose.empty()){
         x_curr = currPose.at<float>(0,3);
         y_curr = currPose.at<float>(1,3);
-        Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
-        float curr_angle = atan2(T_wb_eig(1,0), T_wb_eig(0,0));
+        //Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
+        float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
   
 
         float dist = sqrt((x_curr - x_end)*(x_curr - x_end) + (y_curr - y_end)*(y_curr - y_end));
@@ -291,14 +291,11 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
-        if(!mpTracker->goalDetected){
+        if(!mpTracker->goalDetected && !mpTracker->recover_success){
             if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0 && mpTracker->exploreFinish)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
                 mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
                 planRequestSent = true; 
                 planStarted = true;
-                //cout << "********************" << endl;
-                //cout << __LINE__ << endl;
-                //cout << "********************" << endl;
             }
 
             planned_trajectory = mpPlanner->GetPlanningTrajectory();
@@ -308,26 +305,14 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             if(!planRequestSent&&(!goal_reached)){
                 mpPlanner->SendPlanningRequest(currPose, nullptr);
                 planRequestSent = true; 
+               
                 
             }
             planned_trajectory = mpPlanner->GetPlanningTrajectory();          
         }
 
 
-        /*
-        if (planned_trajectory.empty()){
-            cout << "********************" << endl;
-            cout << __LINE__ << endl;
-            cout << "********************" << endl;
-        }
-
-        if (mpTracker->planned_trajectory.size()==planned_trajectory.size()){
-            cout << "********************" << endl;
-            cout << __LINE__ << endl;
-            cout << "********************" << endl;
-        }*/
-
-
+   
         // If update the trajectory then we reset the plan request flag
         if (!planned_trajectory.empty() && (mpTracker->planned_trajectory.size()!=planned_trajectory.size()) ) {
             x_end = planned_trajectory.back()[0];
@@ -335,10 +320,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             mpTracker->planned_trajectory = planned_trajectory;
             mpTracker->exploreFinish = false;
             mpTracker->goalDetected=false;
+            mpTracker->recover_success=false;                        
             planRequestSent = false;
-            //cout << "********************" << endl;
-            //cout << __LINE__ << endl;
-            //cout << "********************" << endl;
         }
     }
 
