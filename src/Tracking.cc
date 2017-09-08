@@ -1823,9 +1823,11 @@ bool Tracking::computeExplorationMode(){
         exploreStart = false;
         exploreEnd = false;
         explore_reverse=false;        
-        path_it_counter++;
-        planned_trajectory.pop_back();
-        planned_trajectory.push_back({curr_x, curr_y, curr_angle});
+       // path_it_counter++;
+        //planned_trajectory.pop_back();
+        planned_trajectory.back() = {curr_x, curr_y, curr_angle};
+        curr_des = {curr_x, curr_y, curr_angle};
+        path_it_counter=planned_trajectory.size()-1;
         return true;
     }
 

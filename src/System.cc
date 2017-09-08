@@ -308,6 +308,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             if(!planRequestSent&&(!goal_reached)){
                 mpPlanner->SendPlanningRequest(currPose, nullptr);
                 planRequestSent = true; 
+                
             }
             planned_trajectory = mpPlanner->GetPlanningTrajectory();          
         }
@@ -333,6 +334,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             y_end = planned_trajectory.back()[1];
             mpTracker->planned_trajectory = planned_trajectory;
             mpTracker->exploreFinish = false;
+            mpTracker->goalDetected=false;
             planRequestSent = false;
             //cout << "********************" << endl;
             //cout << __LINE__ << endl;
