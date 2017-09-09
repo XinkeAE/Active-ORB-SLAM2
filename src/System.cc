@@ -117,10 +117,10 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         }
         cerr << "Map loaded with " << mpMap->MapPointsInMap() << " points."
              << endl;
-	    for(auto kf: mpMap->GetAllKeyFrames()) {
-		    mpKeyFrameDatabase->add(kf);
+        for(auto kf: mpMap->GetAllKeyFrames()) {
+            mpKeyFrameDatabase->add(kf);
         }
-	}
+    }
 
     //Create Drawers. These are used by the Viewer
     mpFrameDrawer = new FrameDrawer(mpMap);
@@ -131,9 +131,13 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                              mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
                              
-	// Initialize the Planning thread
-	mpPlanner = new Planning(cv::Mat(), mpMap);
-	mptPlanning = new thread(&ORB_SLAM2::Planning::Run, mpPlanner);
+    // Initialize the Planning thread
+    mpPlanner = new Planning(cv::Mat(), mpMap);
+    mptPlanning = new thread(&ORB_SLAM2::Planning::Run, mpPlanner);
+    // Initialize the Octomap thread
+    mpOctomapBuilder = new OctomapBuilder();
+    mptOctomapBuilding = new thread(&ORB_SLAM2::Planning::Run,
+                                    mpOctomapBuilder);
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);

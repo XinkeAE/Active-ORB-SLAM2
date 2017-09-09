@@ -81,6 +81,7 @@ src/camera.cc
 src/collisions.cc
 src/plan.cc
 src/Planning.cc
+src/OctomapBuilder.cc
 )
 
 target_link_libraries(${PROJECT_NAME}

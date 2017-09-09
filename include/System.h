@@ -169,6 +169,8 @@ private:
 
 	// Perform planning.
     Planning* mpPlanner;
+    // Octomap building.
+    OctomapBuilder* mpOctomapBuilder;
 
     // Local Mapper. It manages the local map and performs local bundle adjustment.
     LocalMapping* mpLocalMapper;
@@ -186,6 +188,7 @@ private:
     // System threads: Local Mapping, Loop Closing, Viewer.
     // The Tracking thread "lives" in the main execution thread that creates the System object.
 	std::thread* mptPlanning;
+    std::thread* mptOctomapBuilding;
     std::thread* mptLocalMapping;
     std::thread* mptLoopClosing;
     std::thread* mptViewer;
