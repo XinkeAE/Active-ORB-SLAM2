@@ -24,7 +24,15 @@ OctomapBuilder::OctomapBuilder(){
 void OctomapBuilder::Run() {
     while (1) {
         unique_lock<mutex> lock(mMutexUpdate);
-        cvUpdate.wait(lock, [&] { return this->hasUpdate; });
+        cvUpdate.wait(lock, [&] {
+                if (this->hasUpdate) {
+                    this->hasUpdate = false;
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+        cout << "Update Octomap" << endl; 
         // Update the octomap.
         Eigen::Matrix4f T_wc_eig = Converter::toMatrix4f(T_wc_mat);
         Eigen::Quaternionf q_wc(T_wc_eig.topLeftCorner<3,3>());
@@ -38,7 +46,7 @@ void OctomapBuilder::Run() {
         octomap::Pointcloud local_cloud;  
         for(int m=0; m<depth.rows; m++){
             for (int n=0; n<depth.cols; n++){
-                float d = depth.ptr<float>(m)[n];
+                float d = depth.at<float>(m,n);
                 if(d < 0.05) continue;
                 float z = d;
                 float x = (float(n) - camera_cx) * z / camera_fx;
@@ -65,12 +73,12 @@ void OctomapBuilder::SendGetOctomapRequest() {
 void OctomapBuilder::UpdateOctomap(const cv::Mat &depth_, cv::Mat currPose_) {
     unique_lock<mutex> lock(mMutexUpdate);
     hasUpdate = true;
-    depth = depth_.clone();
-    depth.convertTo(depth, CV_32F, depthFactor);
+    depth_.convertTo(depth, CV_32FC1, depthFactor);
     currPose = currPose_.clone();
     T_wc_mat = currPose*T_bc;
     lock.unlock();
     cvUpdate.notify_one();
+    cout << "call update" << endl;
 }
 
 }  // namespace ORB_SLAM
