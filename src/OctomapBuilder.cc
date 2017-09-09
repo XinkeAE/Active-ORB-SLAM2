@@ -63,6 +63,29 @@ void OctomapBuilder::Run() {
         unique_lock<mutex> lock2(mMutexRequest);
         globalOctoMap->insertPointCloud(
                 local_cloud, octomap::point3d(vec3.x(), vec3.y(), vec3.z()));
+        globalOctoMap->updateInnerOccupancy();
+
+        unsigned int maxDepth = globalOctoMap->getTreeDepth();
+
+        // expand collapsed occupied nodes until all occupied leaves are at maximum depth
+        /*
+        vector<octomap::OcTreeNode*> collapsed_occ_nodes;
+        do {
+            collapsed_occ_nodes.clear();
+            for (octomap::OcTree::iterator it = globalOctoMap->begin(); it != globalOctoMap->end(); ++it)
+            {
+            if(globalOctoMap->isNodeOccupied(*it) && it.getDepth() < maxDepth)
+            {
+                collapsed_occ_nodes.push_back(&(*it));
+            }
+            }
+            for (vector<octomap::OcTreeNode*>::iterator it = collapsed_occ_nodes.begin(); it != collapsed_occ_nodes.end(); ++it)
+            {
+                globalOctoMap->expandNode(*it);
+            }
+            cout << "expanded " << collapsed_occ_nodes.size() << " nodes" << endl;
+        } while(collapsed_occ_nodes.size() > 0);*/
+
         lock2.unlock();
     }
 }
