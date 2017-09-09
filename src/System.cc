@@ -332,6 +332,11 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             mpTracker->recover_success=false;                        
             planRequestSent = false;
         }
+        
+        // If is keyframe, update the octomap
+        if (mpTracker->mbKeyframe) {
+            mpOctomapBuilder->UpdateOctomap(depthmap, currPose);
+        }
     }
 
     unique_lock<mutex> lock2(mMutexState);

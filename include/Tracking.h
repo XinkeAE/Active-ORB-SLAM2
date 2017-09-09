@@ -39,6 +39,7 @@
 #include "MapDrawer.h"
 #include "System.h"
 #include "Planning.h"
+#include "OctomapBuilder.h"
 
 #include <mutex>
 

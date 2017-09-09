@@ -172,7 +172,6 @@ void Tracking::SetViewer(Viewer *pViewer)
     mpViewer=pViewer;
 }
 
-
 cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
 {
     mImGray = imRectLeft;
@@ -304,8 +303,6 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         recoverMode = false;
         //cout << "not in recover mode" << endl;
     }
-
-
     return mCurrentFrame.mTcw.clone();
 }
 

@@ -1,6 +1,7 @@
 #ifndef OCTOMAPBUILDER_H
 #define OCTOMAPBUILDER_H
 
+#include <condition_variable>
 #include <deque>
 #include <mutex>
 #include <set>
@@ -61,7 +62,7 @@ private:
     // Octomap
     octomap::OcTree* globalOctoMap;
 
-    // Check if tracking thread sends a request, which contains a KeyFrame and a
+    // Check if tracking thread sends a update, which contains a depth and a
     // current pose.
     bool CheckHasRequest();
     bool CheckHasUpdate();
@@ -69,9 +70,11 @@ private:
     void AckRequest();
     cv::Mat currPose;
     cv::Mat depth;
+    float depthFactor;
     bool hasUpdate;
     std::mutex mMutexRequest;
     std::mutex mMutexUpdate;
+    std::condition_variable cvUpdate;
 
     // camera parameters
     float camera_fx;
