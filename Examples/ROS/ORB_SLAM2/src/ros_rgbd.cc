@@ -236,6 +236,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         pose_out_.pose.orientation.w = pose_orientation.getW();
 
         // build octomap
+        /*
         if(mpSLAM->GetKeyframeStatus()){
 
             cv::Mat depth = cv_ptrD->image.clone();
@@ -295,7 +296,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
             octomapPublisher.publish(octomap_out_);
         
         }
-        octomapPublisher.publish(octomap_out_);
+        octomapPublisher.publish(octomap_out_);*/
 
         if(initialized){
             posePublisher.publish(pose_out_);
@@ -319,7 +320,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
                 dest_out_.x = float(curr_dest[0]);
                 dest_out_.y = float(curr_dest[1]);
                 dest_out_.theta = float(curr_dest[2]);
-                cout << "desired position: x = " << dest_out_.x << " , y = " << dest_out_.y << " , theta = " << dest_out_.theta << endl;
+                //cout << "desired position: x = " << dest_out_.x << " , y = " << dest_out_.y << " , theta = " << dest_out_.theta << endl;
                 currDestPublisher.publish(dest_out_);
             }
 

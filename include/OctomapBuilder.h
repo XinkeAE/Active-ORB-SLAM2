@@ -45,7 +45,7 @@ public:
     // Request planning thread to stop.
     void RequestFinish();
     // TODO: Update Octomap.
-    void UpdateOctomap(const cv::Mat &depth, cv::Mat currPose);
+    void UpdateOctomap(const cv::Mat & depth, cv::Mat currPose);
 
 private:
     // Check if the thread should stop.
@@ -69,6 +69,7 @@ private:
     void AckRequest();
     cv::Mat currPose;
     cv::Mat depth;
+    float depthFactor;
     bool hasUpdate;
     std::mutex mMutexRequest;
     std::mutex mMutexUpdate;
