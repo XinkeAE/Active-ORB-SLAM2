@@ -107,6 +107,9 @@ public:
 	/** Set the threshold for the feature constraint */
 	void set_featureThreshold(int num);
 
+	/** Set the current known environment map for the planning */
+	void set_FloorMap(ppMatrix);
+
 private:
 	int n = 3;
 
@@ -115,6 +118,8 @@ private:
 	map_data MD;
 
 	int feature_thres;
+
+	ppMatrix FloorMap;
 
 };
 

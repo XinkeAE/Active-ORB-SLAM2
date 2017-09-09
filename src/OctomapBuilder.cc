@@ -32,7 +32,6 @@ void OctomapBuilder::Run() {
                     return false;
                 }
             });
-        cout << "Update Octomap" << endl; 
         // Update the octomap.
         Eigen::Matrix4f T_wc_eig = Converter::toMatrix4f(T_wc_mat);
         Eigen::Quaternionf q_wc(T_wc_eig.topLeftCorner<3,3>());
@@ -80,7 +79,6 @@ void OctomapBuilder::UpdateOctomap(const cv::Mat &depth_, cv::Mat currPose_) {
     T_wc_mat = currPose*T_bc;
     lock.unlock();
     cvUpdate.notify_one();
-    cout << "call update" << endl;
 }
 
 vector<vector<float>> OctomapBuilder::getOccupiedPoints() {

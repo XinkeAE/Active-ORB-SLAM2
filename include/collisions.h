@@ -43,6 +43,8 @@ struct kNeighborSoln {
 class collisionDetection
 {
 public:
+	collisionDetection(ppMatrix);
+
 	collisionDetection();
 
 	void load_obstacles();
@@ -56,7 +58,7 @@ public:
 
 private:
 	ppMatrix Obs;
-	double obs_r = 0.05; // Assumed point obstacle radius
+	double obs_r = 0.1; // Assumed point obstacle radius
 
 	string path_file = "./data/obs.txt";
 

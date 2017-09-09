@@ -42,12 +42,12 @@ ob::PlannerPtr plan_slam::allocatePlanner(ob::SpaceInformationPtr si, plannerTyp
     {
         case PLANNER_RRT:
         {
-            return std::make_shared<og::RRT>(si, MD, feature_thres);
+            return std::make_shared<og::RRT>(si, MD, FloorMap, feature_thres);
             break;
         }
         case PLANNER_RRTSTAR:
         {
-            return std::make_shared<og::RRTstar>(si, MD, feature_thres);
+            return std::make_shared<og::RRTstar>(si, MD, FloorMap, feature_thres);
             break;
         }
         default:
@@ -68,7 +68,7 @@ ob::OptimizationObjectivePtr plan_slam::getPathLengthObjective(const ob::SpaceIn
 
     OMPL_INFORM("Loading path length optimization objective.");
 
-    return ob::OptimizationObjectivePtr(new LengthObjective(si, MD));
+    return ob::OptimizationObjectivePtr(new LengthObjective(si, MD, FloorMap));
 }
 
 /** Return an optimization objective which attempts to minimiaze turn angle. */
@@ -76,7 +76,7 @@ ob::OptimizationObjectivePtr plan_slam::getMyObjective(const ob::SpaceInformatio
 {
     OMPL_INFORM("Loading custom optimization objective.");
 
-    return ob::OptimizationObjectivePtr(new CameraObjective(si, MD));
+    return ob::OptimizationObjectivePtr(new CameraObjective(si, MD, FloorMap));
 }
 
 /** Create an optimization objective equivalent to the one returned by
@@ -85,8 +85,8 @@ ob::OptimizationObjectivePtr plan_slam::getWeightedObjective(const ob::SpaceInfo
 {
     OMPL_INFORM("Loading multi-objective optimization.");
 
-    ob::OptimizationObjectivePtr lengthObj(new LengthObjective(si, MD));
-    ob::OptimizationObjectivePtr customObj(new CameraObjective(si, MD));
+    ob::OptimizationObjectivePtr lengthObj(new LengthObjective(si, MD, FloorMap));
+    ob::OptimizationObjectivePtr customObj(new CameraObjective(si, MD, FloorMap));
 
     return 1.0*lengthObj + customObj;
 }
@@ -140,7 +140,7 @@ void plan_slam::UpdateMap(ppMatrix Map, Vector upper_bound, Vector lower_bound, 
 
 int plan_slam::AdvanceStepCamera(ppMatrix M, int thres) {
 
-	StateValidChecker svc(MD, thres);
+	StateValidChecker svc(MD, FloorMap, thres);
 
 	int i = 0;
 	while (i < M.size() && svc.IsStateVisiblilty(M[i][0],M[i][1],M[i][2],thres))
@@ -149,6 +149,11 @@ int plan_slam::AdvanceStepCamera(ppMatrix M, int thres) {
 
 	return i;
 }
+
+void plan_slam::set_FloorMap(ppMatrix Map) {
+	FloorMap = Map;
+}
+
 
 void plan_slam::set_featureThreshold(int num) {
 	feature_thres = num;

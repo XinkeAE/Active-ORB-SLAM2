@@ -41,18 +41,17 @@
 
 #include "myRRT.h"
 
-ompl::geometric::RRT::RRT(const base::SpaceInformationPtr &si, map_data MD, int thres) : base::Planner(si, "RRT"), StateValidChecker(si, MD){
+ompl::geometric::RRT::RRT(const base::SpaceInformationPtr &si, map_data MD, ppMatrix FloorMap, int thres) : base::Planner(si, "RRT"), StateValidChecker(si, MD, FloorMap, thres)
+{
     specs_.approximateSolutions = true;
     specs_.directed = true;
 
-    cout << "10.1" << endl;
     defaultSettings(); // Avishai
 
     goalBias_ = 0.05;
     maxDistance_ = 0.0;
     lastGoalMotion_ = nullptr;
 
-    cout << "10.2" << endl;
     Planner::declareParam<double>("range", this, &RRT::setRange, &RRT::getRange, "0.:1.:10000.");
     Planner::declareParam<double>("goal_bias", this, &RRT::setGoalBias, &RRT::getGoalBias, "0.:.05:1.");
 }

@@ -115,13 +115,14 @@ void Planning::Run() {
 
             //std::cout << planningMap.size() << std::endl;
 
-            int threshold = 50;
-            int threshold_explore = 10;
+            int threshold = 0;
+            int threshold_explore = 0;
 
             cout << maxDist[0] << endl;
 
             pl->UpdateMap(planningMap, UB, LB, maxDist, minDist, foundRatio);
             pl->set_featureThreshold(threshold);
+            pl->set_FloorMap(FloorMap);
 
             std::vector<double> q_curr_goal = q_goal;
 
@@ -349,6 +350,13 @@ KeyFrame* Planning::PopKeyFrameQueue(int num_pop) {
         mKeyFrameQueue.pop_front();
     }
     return poppedKF;
+}
+
+void Planning::setFloorMap(vector<vector<float>> floorMap_){
+    FloorMap.clear();
+    for(size_t i = 0; i < floorMap_.size(); i++){
+        FloorMap.push_back({double(floorMap_[i][0]), double(floorMap_[i][1]) });
+    }
 }
 
 }  // namespace ORB_SLAM
