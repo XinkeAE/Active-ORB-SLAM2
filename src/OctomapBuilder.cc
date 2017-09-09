@@ -52,6 +52,7 @@ void OctomapBuilder::Run() {
                 float y = (float(m) - camera_cy) * z / camera_fy;
                 if(z > 5) continue;
                 if( y > 0.25 || y < -0.2) continue;
+                y=0;
                 local_cloud.push_back(x,y,z);
              }
         }
