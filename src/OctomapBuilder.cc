@@ -58,8 +58,10 @@ void OctomapBuilder::Run() {
         }
         local_cloud.transform(T_wc_octo);
         octomath::Vector3 vec3 = T_wc_octo.trans();
+        unique_lock<mutex> lock2(mMutexRequest);
         globalOctoMap->insertPointCloud(
                 local_cloud, octomap::point3d(vec3.x(), vec3.y(), vec3.z()));
+        lock2.unlock();
     }
 }
 
@@ -79,6 +81,18 @@ void OctomapBuilder::UpdateOctomap(const cv::Mat &depth_, cv::Mat currPose_) {
     lock.unlock();
     cvUpdate.notify_one();
     cout << "call update" << endl;
+}
+
+vector<vector<float>> OctomapBuilder::getOccupiedPoints() {
+    vector<vector<float>> occupiedPoints;
+    unique_lock<mutex> lock(mMutexRequest);
+    for (auto it = globalOctoMap->begin(); it != globalOctoMap->end(); it++) {
+        if (globalOctoMap->isNodeOccupied(*it)) {
+            occupiedPoints.push_back({it.getCoordinate().x(), it.getCoordinate().y(), it.getCoordinate().z()});
+        }
+    }
+    lock.unlock();
+    return occupiedPoints;
 }
 
 }  // namespace ORB_SLAM

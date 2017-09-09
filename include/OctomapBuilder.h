@@ -47,6 +47,7 @@ public:
     void RequestFinish();
     // Update Octomap.
     void UpdateOctomap(const cv::Mat &depth, cv::Mat currPose);
+    vector<vector<float>> getOccupiedPoints();
 
 private:
     // Check if the thread should stop.
