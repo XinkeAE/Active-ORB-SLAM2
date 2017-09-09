@@ -80,6 +80,40 @@ void MapDrawer::DrawMapPoints()
 
     glEnd();
 }
+void MapDrawer::SetCurrentCollision(const std::vector<std::vector<float>> &bCollision)
+{
+    unique_lock<mutex> lock(mMutexCollision);
+    mCollisionPts=bCollision;
+    //std::cout<<"Octomap Updated in Drawer"<<std::endl;
+}
+
+void MapDrawer::DrawMapCollision()
+{
+    //const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
+    //const vector<MapPoint*> &vpRefMPs = mpMap->GetReferenceMapPoints();
+
+    //set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
+    unique_lock<mutex> lock(mMutexCollision);
+
+    if(mCollisionPts.empty())
+        return;
+
+    int rows = static_cast<int>(mCollisionPts.size());
+    glPointSize(9*mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,0.0,1.0);
+
+    for(int i=0; i<rows; i++)
+    {   
+        cv::Mat P_w=(cv::Mat_<float>(4,1) << mCollisionPts[i][0],
+                    mCollisionPts[i][1],
+                    mCollisionPts[i][2],
+                    1);
+        cv::Mat P_s=T_sw_mat*P_w;
+        glVertex3f(P_s.at<float>(0,0),P_s.at<float>(1,0),P_s.at<float>(2,0));
+    }
+    glEnd();
+}
 
 void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
 {

@@ -348,6 +348,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             mpOctomapBuilder->UpdateOctomap(depthmap, currPose);
             vector<vector<float>> occupiedPoints = mpOctomapBuilder->getOccupiedPoints();
             cout << "occupancy grid size = " << occupiedPoints.size() << endl;
+
+            mpTracker->UpdateCollision(occupiedPoints);
             if(occupiedPoints.size()!=0)
                 octomapInitialize = true;
         }

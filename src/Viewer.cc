@@ -133,6 +133,7 @@ void Viewer::Run()
             mpMapDrawer->DrawMapPoints();
 
         mpMapDrawer->DrawPath();
+        mpMapDrawer->DrawMapCollision();
 
         pangolin::FinishFrame();
 
