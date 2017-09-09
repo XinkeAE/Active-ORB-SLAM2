@@ -20,6 +20,22 @@ collisionDetection::collisionDetection() : KDtree(2, {{0,0},{1,1}}, 1) { // Dumm
 
 }
 
+collisionDetection::collisionDetection(ppMatrix FloorMap) : KDtree(2, {{0,0},{1,1}}, 1) { // Dummy construction of the kd-tree class
+
+	Obs = FloorMap;
+	num_of_obs = Obs.size();
+
+	//for(int i = 0; i < num_of_obs; i++)
+	//	cout << Obs[i][0] << " " << Obs[i][1] << endl;
+
+	// Re-construction of the kd-tree with the real data set
+	KDtree.~KDTreeVectorOfVectorsAdaptor();
+	new(&KDtree) my_kd_tree_t(2, Obs, 10);
+	//KDtree = my_kd_tree_t(2, Obs, 10); // This is another option that did not work
+
+	KDtree.index->buildIndex();
+}
+
 void collisionDetection::load_obstacles() {
 
 	double x, y, r;

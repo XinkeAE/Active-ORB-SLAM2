@@ -299,6 +299,10 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         if(octomapInitialize){
             if(!mpTracker->goalDetected){
                 if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0 && mpTracker->exploreFinish)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
+                    
+                    // update the floor map in planning
+                    mpPlanner->setFloorMap( mpOctomapBuilder->getOccupiedPoints() );
+
                     mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
                     planRequestSent = true; 
                     planStarted = true;
@@ -309,6 +313,10 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             }else{
 
                 if(!planRequestSent&&(!goal_reached)){
+
+                    // update the floor map in planning
+                    mpPlanner->setFloorMap( mpOctomapBuilder->getOccupiedPoints() );
+
                     mpPlanner->SendPlanningRequest(currPose, nullptr);
                     planRequestSent = true; 
                 
@@ -339,7 +347,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         if (mpTracker->mbKeyframe || !octomapInitialize) {
             mpOctomapBuilder->UpdateOctomap(depthmap, currPose);
             vector<vector<float>> occupiedPoints = mpOctomapBuilder->getOccupiedPoints();
-            cout << occupiedPoints.size() << endl;
+            //cout << occupiedPoints.size() << endl;
             if(occupiedPoints.size()!=0)
                 octomapInitialize = true;
         }

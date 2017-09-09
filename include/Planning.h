@@ -47,6 +47,9 @@ public:
 	// Get planning trajectory.
 	std::vector<std::vector<double>> GetPlanningTrajectory();
 
+	// Set floor map
+	void setFloorMap(vector<vector<float>> floorMap_);
+
 private:
 	// Check if the thread should stop.
 	bool CheckFinish();
@@ -66,6 +69,9 @@ private:
 	Vector maxDist;
 	Vector minDist;
 	Vector foundRatio;
+
+	// Floor map
+	ppMatrix FloorMap;
 
 	std::vector<std::vector<double>> keyframePose;
 	Eigen::Matrix4f T_sw;

@@ -25,7 +25,7 @@ using namespace std;
 
 #define PI 3.1416
 
-#define ROBOT_RADIUS 0.5
+#define ROBOT_RADIUS 0.4
 #define TURN_RADIUS 0.25
 #define DT 0.3
 #define MAX_DIST_HEURISTIC 2
@@ -47,7 +47,7 @@ typedef struct {
 class StateValidChecker : public collisionDetection, public camera
 {
 public:
-	StateValidChecker(const ob::SpaceInformationPtr &si, map_data MD, int thres = 20) :
+	StateValidChecker(const ob::SpaceInformationPtr &si, map_data MD, ppMatrix FloorMap, int thres = 20) :
 		mysi_(si.get()),
 		camera(MD, thres),
 		turn_radius(TURN_RADIUS),
@@ -55,17 +55,19 @@ public:
 		dt(DT),
 		heuristicValidityCheck(true),
 		maxDistHeuristicValidity(MAX_DIST_HEURISTIC),
-		StartState(3)
+		StartState(3),
+		collisionDetection(FloorMap)
 	{};
 
-	StateValidChecker(map_data MD, int thres = 20) :
+	StateValidChecker(map_data MD, ppMatrix FloorMap, int thres = 20) :
 		camera(MD, thres),
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),
 		heuristicValidityCheck(true),
 		maxDistHeuristicValidity(MAX_DIST_HEURISTIC),
-		StartState(3)
+		StartState(3),
+		collisionDetection(FloorMap)
 	{};
 
 	void retrieveStateVector(const ob::State *state, Vector &a);
