@@ -48,6 +48,8 @@ public:
     // Update Octomap.
     void UpdateOctomap(const cv::Mat &depth, cv::Mat currPose);
     vector<vector<float>> getOccupiedPoints();
+    vector<vector<float>> getLowProbPoints();
+    bool calcOccupiedPoints();
 
 private:
     // Check if the thread should stop.
@@ -59,6 +61,9 @@ private:
     bool mbStopped;
     std::mutex mMutexFinish;
     std::mutex mMutexStop;
+
+    vector<vector<float>> OccupiedPoints;
+    vector<vector<float>> FreePoints;
 
     // Octomap
     octomap::OcTree* globalOctoMap;

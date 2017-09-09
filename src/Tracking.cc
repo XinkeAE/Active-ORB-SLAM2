@@ -261,7 +261,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         }
 
     }
-/*
+    /*
     // recover from the LOST state
     
     if(mState==LOST){
@@ -303,7 +303,6 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         recoverMode = false;
         //cout << "not in recover mode" << endl;
     }
-
     */
     return mCurrentFrame.mTcw.clone();
 }
@@ -1964,5 +1963,10 @@ void Tracking::UpdateCollision(const std::vector<std::vector<float>> &bCollision
     this->mpMapDrawer->SetCurrentCollision(bCollision);
 }
 
+
+void Tracking::UpdateLow(const std::vector<std::vector<float>> &bCollision)
+{
+    this->mpMapDrawer->SetCurrentLowProb(bCollision);
+}
 
 } //namespace ORB_SLAM

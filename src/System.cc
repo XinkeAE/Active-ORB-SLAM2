@@ -301,7 +301,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                 if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0 && mpTracker->exploreFinish)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
                     
                     // update the floor map in planning
-                    mpPlanner->setFloorMap( mpOctomapBuilder->getOccupiedPoints() );
+                    if(mpOctomapBuilder->calcOccupiedPoints())
+                        mpPlanner->setFloorMap( mpOctomapBuilder->getOccupiedPoints() );
 
                     mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
                     planRequestSent = true; 
@@ -315,7 +316,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                 if(!planRequestSent&&(!goal_reached)){
 
                     // update the floor map in planning
-                    mpPlanner->setFloorMap( mpOctomapBuilder->getOccupiedPoints() );
+                    if(mpOctomapBuilder->calcOccupiedPoints())
+                        mpPlanner->setFloorMap( mpOctomapBuilder->getOccupiedPoints() );
 
                     mpPlanner->SendPlanningRequest(currPose, nullptr);
                     planRequestSent = true; 
@@ -346,11 +348,15 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         // If is keyframe, update the octomap
         if (mpTracker->mbKeyframe || !octomapInitialize) {
             mpOctomapBuilder->UpdateOctomap(depthmap, currPose);
-            vector<vector<float>> occupiedPoints = mpOctomapBuilder->getOccupiedPoints();
-            mpTracker->UpdateCollision(occupiedPoints);
-            //cout << occupiedPoints.size() << endl;
-            if(occupiedPoints.size()!=0)
-                octomapInitialize = true;
+            if(mpOctomapBuilder->calcOccupiedPoints()){
+                vector<vector<float>> occupiedPoints = mpOctomapBuilder->getOccupiedPoints();
+                vector<vector<float>> lowptrs=mpOctomapBuilder->getLowProbPoints();
+                mpTracker->UpdateCollision(occupiedPoints);
+                mpTracker->UpdateLow(lowptrs);
+                if(occupiedPoints.size()!=0)
+                    octomapInitialize = true;
+            }
+           
         }
     }
 

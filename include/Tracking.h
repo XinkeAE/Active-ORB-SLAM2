@@ -84,6 +84,7 @@ public:
     float GetDepthScaleFactor();
 
     void UpdateCollision(const std::vector<std::vector<float>> &bCollision);
+    void UpdateLow(const std::vector<std::vector<float>> &bCollision);
 
 
 public:

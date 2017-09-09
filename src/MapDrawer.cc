@@ -115,6 +115,46 @@ void MapDrawer::DrawMapCollision()
     glEnd();
 }
 
+
+
+
+void MapDrawer::SetCurrentLowProb(const std::vector<std::vector<float>> &bCollision)
+{
+    unique_lock<mutex> lock(mMutexlow);
+    mLowPts=bCollision;
+    //std::cout<<"Octomap Updated in Drawer"<<std::endl;
+}
+
+void MapDrawer::DrawMapLowProb()
+{
+    //const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
+    //const vector<MapPoint*> &vpRefMPs = mpMap->GetReferenceMapPoints();
+
+    //set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
+    unique_lock<mutex> lock(mMutexlow);
+
+    if(mLowPts.empty())
+    {
+        return;
+    }
+
+    int rows = static_cast<int>(mLowPts.size());
+    glPointSize(9*mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(1.0,0.0,0.0);
+
+    for(int i=0; i<rows; i++)
+    {   
+        cv::Mat P_w=(cv::Mat_<float>(4,1) << mLowPts[i][0],
+                    mLowPts[i][1],
+                    mLowPts[i][2],
+                    1);
+        cv::Mat P_s=T_sw_mat*P_w;
+        glVertex3f(P_s.at<float>(0,0),P_s.at<float>(1,0),P_s.at<float>(2,0));
+    }
+    glEnd();
+}
+
 void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
 {
     const float &w = mKeyFrameSize;

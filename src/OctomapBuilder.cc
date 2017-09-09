@@ -4,6 +4,8 @@ namespace ORB_SLAM2 {
 
 OctomapBuilder::OctomapBuilder(){
     globalOctoMap = new octomap::OcTree(0.1f);
+    globalOctoMap->setOccupancyThres(0.5);
+    //globalOctoMap->setProbMiss(0.51);
     hasUpdate = false;
     camera_cx = 474.95;
     camera_cy = 264.26;
@@ -52,6 +54,7 @@ void OctomapBuilder::Run() {
                 float y = (float(m) - camera_cy) * z / camera_fy;
                 if(z > 5) continue;
                 if( y > 0.25 || y < -0.2) continue;
+                y=0;
                 local_cloud.push_back(x,y,z);
              }
         }
@@ -81,16 +84,29 @@ void OctomapBuilder::UpdateOctomap(const cv::Mat &depth_, cv::Mat currPose_) {
     cvUpdate.notify_one();
 }
 
-vector<vector<float>> OctomapBuilder::getOccupiedPoints() {
-    vector<vector<float>> occupiedPoints;
+bool OctomapBuilder::calcOccupiedPoints() {
+    //vector<vector<float>> occupiedPoints;
     unique_lock<mutex> lock(mMutexRequest);
+    OccupiedPoints.clear();
+    FreePoints.clear();
     for (auto it = globalOctoMap->begin(); it != globalOctoMap->end(); it++) {
         if (globalOctoMap->isNodeOccupied(*it)) {
-            occupiedPoints.push_back({it.getCoordinate().x(), it.getCoordinate().y(), it.getCoordinate().z()});
+            OccupiedPoints.push_back({it.getCoordinate().x(), it.getCoordinate().y(), it.getCoordinate().z()});
+        }else
+        {
+            FreePoints.push_back({it.getCoordinate().x(), it.getCoordinate().y(), it.getCoordinate().z()});
         }
     }
     lock.unlock();
-    return occupiedPoints;
+    return true;
 }
 
+vector<vector<float>> OctomapBuilder::getLowProbPoints() {
+
+    return FreePoints;
+}
+vector<vector<float>> OctomapBuilder::getOccupiedPoints() {
+    
+        return OccupiedPoints;
+}
 }  // namespace ORB_SLAM
