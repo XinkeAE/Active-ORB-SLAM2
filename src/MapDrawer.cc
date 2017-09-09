@@ -80,6 +80,33 @@ void MapDrawer::DrawMapPoints()
 
     glEnd();
 }
+void MapDrawer::SetCurrentCollision(const std::vector<std::vector<double>> &bCollision)
+{
+    unique_lock<mutex> lock(mMutexCollision);
+    mCollisionPts=bCollision;
+}
+
+void MapDrawer::DrawMapCollision()
+{
+    //const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
+    //const vector<MapPoint*> &vpRefMPs = mpMap->GetReferenceMapPoints();
+
+    //set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
+    unique_lock<mutex> lock(mMutexCollision);
+
+    if(mCollisionPts.empty())
+        return;
+
+    glPointSize(3*mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,0.0,1.0);
+
+    for(auto & it : mCollisionPts)
+    {
+        glVertex3f(it[0],it[1],it[2]);
+    }
+    glEnd();
+}
 
 void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
 {

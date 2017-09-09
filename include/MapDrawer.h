@@ -47,12 +47,16 @@ public:
     void SetCurrentPath(const std::vector<std::vector<double>> &bPath);
     void DrawPath();
     void SetCurrentCounter(int counter);
+    void DrawMapCollision();
+    void SetCurrentCollision(const std::vector<std::vector<double>> &bCollision);
+
     
 
 
 
 private:
     std::vector<std::vector<double>> mPath;
+    std::vector<std::vector<double>> mCollisionPts;
     float mKeyFrameSize;
     float mKeyFrameLineWidth;
     float mGraphLineWidth;
@@ -78,6 +82,8 @@ private:
     std::mutex mMutexPath;
 
     std::mutex mMutexCounter;
+
+    std::mutex mMutexCollision;
 };
 
 } //namespace ORB_SLAM
