@@ -70,7 +70,7 @@ public:
 
         T_ws = cvMatToTF(T_ws_mat);
 
-        globalOctoMap = new octomap::OcTree(0.05f);
+        globalOctoMap = new octomap::OcTree(0.1f);
     }
 
     void GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
@@ -236,7 +236,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         pose_out_.pose.orientation.w = pose_orientation.getW();
 
         // build octomap
-        /*if(mpSLAM->GetKeyframeStatus()){
+        if(mpSLAM->GetKeyframeStatus()){
 
             cv::Mat depth = cv_ptrD->image.clone();
             depth.convertTo(depth,CV_32F,depthFactor);
@@ -258,6 +258,14 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
                     float z = d;
                     float x = (float(n) - camera_cx) * z / camera_fx;
                     float y = (float(m) - camera_cy) * z / camera_fy;
+
+                    if(z > 5)
+                        continue;
+
+                    if( y > 0.25 || y < -0.2)
+                        continue;
+
+                    //y = 0;
 
                     local_cloud.push_back(x,y,z);
 
@@ -286,7 +294,8 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
             
             octomapPublisher.publish(octomap_out_);
         
-        }*/
+        }
+        octomapPublisher.publish(octomap_out_);
 
         if(initialized){
             posePublisher.publish(pose_out_);
