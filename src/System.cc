@@ -134,9 +134,10 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     // Initialize the Planning thread
     mpPlanner = new Planning(cv::Mat(), mpMap);
     mptPlanning = new thread(&ORB_SLAM2::Planning::Run, mpPlanner);
+
     // Initialize the Octomap thread
     mpOctomapBuilder = new OctomapBuilder();
-    mptOctomapBuilding = new thread(&ORB_SLAM2::Planning::Run,
+    mptOctomapBuilding = new thread(&ORB_SLAM2::OctomapBuilder::Run,
                                     mpOctomapBuilder);
 
     //Initialize the Local Mapping thread and launch

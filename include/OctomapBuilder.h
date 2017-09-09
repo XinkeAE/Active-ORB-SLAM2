@@ -26,6 +26,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <Converter.h>
+
 namespace ORB_SLAM2 {
 
 class MapPoint;
@@ -43,7 +45,7 @@ public:
     // Request planning thread to stop.
     void RequestFinish();
     // TODO: Update Octomap.
-    void UpdateOctomap(KeyFrame* pKF);
+    void UpdateOctomap(const cv::Mat &depth, cv::Mat currPose);
 
 private:
     // Check if the thread should stop.
@@ -62,6 +64,7 @@ private:
     // Check if tracking thread sends a request, which contains a KeyFrame and a
     // current pose.
     bool CheckHasRequest();
+    bool CheckHasUpdate();
     bool hasRequest;
     void AckRequest();
     cv::Mat currPose;
@@ -69,6 +72,14 @@ private:
     bool hasUpdate;
     std::mutex mMutexRequest;
     std::mutex mMutexUpdate;
+
+    // camera parameters
+    float camera_fx;
+    float camera_fy;
+    float camera_cx;
+    float camera_cy;
+    cv::Mat T_bc;
+    cv::Mat T_wc_mat;    
 };
 
 }  // namespace ORB_SLAM

@@ -42,6 +42,7 @@ find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(OMPL REQUIRED)
 find_package(Boost REQUIRED)
+find_package( octomap REQUIRED )
 
 
 include_directories(
@@ -50,6 +51,7 @@ ${PROJECT_SOURCE_DIR}/include
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
 ${Boost_INCLLUDE_DIR}
+${OCTOMAP_INCLUDE_DIRS}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -90,6 +92,7 @@ ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${OMPL_LIBRARIES}
 ${Boost_LIBRARIES}
+${OCTOMAP_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )

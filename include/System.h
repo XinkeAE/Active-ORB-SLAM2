@@ -36,6 +36,7 @@
 #include "ORBVocabulary.h"
 #include "Viewer.h"
 #include "Planning.h"
+#include "OctomapBuilder.h"
 
 namespace ORB_SLAM2
 {
