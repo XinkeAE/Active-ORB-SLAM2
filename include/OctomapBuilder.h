@@ -45,7 +45,7 @@ public:
     void SendGetOctomapRequest();
     // Request planning thread to stop.
     void RequestFinish();
-    // TODO: Update Octomap.
+    // Update Octomap.
     void UpdateOctomap(const cv::Mat &depth, cv::Mat currPose);
 
 private:
