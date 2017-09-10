@@ -357,8 +357,10 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                 // frontier computation
                 mpOctomapBuilder->findFrontier();
                 vector<vector<float>> frontier = mpOctomapBuilder->getFrontier();
+                mpOctomapBuilder->clusterFrontier();
+                vector<vector<float>> frontier_center = mpOctomapBuilder->getFrontierCenter();
                 //cout << frontier.size() << endl;
-                mpTracker->UpdateFrontier(frontier);
+                mpTracker->UpdateFrontier(frontier_center);
 
                 if(occupiedPoints.size()!=0)
                     octomapInitialize = true;

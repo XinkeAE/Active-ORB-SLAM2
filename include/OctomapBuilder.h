@@ -56,9 +56,10 @@ public:
     // Frontier related
     void findFrontier();
     vector<vector<float>> getFrontier(); 
+    vector<vector<float>> getFrontierCenter(); 
     void clusterFrontier(); 
     void bestFrontier(vector<float>sensorOrigin);
-    void findCenter(std::vector<octomap::OcTreeKey>& cluster, octomap::OcTreeKey& centercell);
+    bool findCenter(std::vector<octomap::OcTreeKey>& cluster, octomap::OcTreeKey& centercell);
     void genNeighborCoord(float x,float y,float z);
     void genNeighborCoord(octomap::OcTreeKey start_key, std::vector<octomap::point3d>& occupiedNeighbor);
 

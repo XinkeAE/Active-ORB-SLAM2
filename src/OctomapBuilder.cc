@@ -3,7 +3,7 @@
 namespace ORB_SLAM2 {
 
 OctomapBuilder::OctomapBuilder(){
-    globalOctoMap = new octomap::OcTree(0.2f);
+    globalOctoMap = new octomap::OcTree(0.1f);
     globalOctoMap->setOccupancyThres(0.5);
     //globalOctoMap->setProbMiss(0.51);
     hasUpdate = false;
@@ -223,9 +223,19 @@ vector<vector<float>> OctomapBuilder::getFrontier(){
     return frontier_vector;    
 }
 
+vector<vector<float>> OctomapBuilder::getFrontierCenter(){
+    vector <vector<float>> frontier_centers;
+    for(octomap::KeySet::iterator iter = candidateCells.begin(), end=candidateCells.end(); iter!= end; ++iter)
+    {
+           octomap::point3d cell = globalOctoMap->keyToCoord(*iter);
+           frontier_centers.push_back({cell.x(),cell.y(),cell.z()});
+    }
+    return frontier_centers;    
+}
 
 
-void OctomapBuilder::findCenter(std::vector<octomap::OcTreeKey>& cluster, octomap::OcTreeKey& centerCell)
+
+bool OctomapBuilder::findCenter(std::vector<octomap::OcTreeKey>& cluster, octomap::OcTreeKey& centerCell)
 {
     //centerCell = cluster[0];
     float x_sum = 0;
@@ -240,7 +250,7 @@ void OctomapBuilder::findCenter(std::vector<octomap::OcTreeKey>& cluster, octoma
 
     if (cluster.size() == 0){
         std::cout << "cluster has zero size, something is wrong!" << std::endl;
-        return;
+        return false;
     }
 
     float x_mean = x_sum/cluster.size();
@@ -249,7 +259,9 @@ void OctomapBuilder::findCenter(std::vector<octomap::OcTreeKey>& cluster, octoma
 
     octomap::point3d center(x_mean, y_mean, z_mean);
 
-    globalOctoMap->coordToKeyChecked(center, centerCell);
+    bool success = globalOctoMap->coordToKeyChecked(center, centerCell);
+
+    return success;
 
 }
 
@@ -292,30 +304,34 @@ void OctomapBuilder::clusterFrontier()
                     continue;
                 temp_queue.push(nei_key);
                 frontierCells.erase(nei_key);
-                int fiternum=0,fnum=0;
-                for(std::vector<octomap::OcTreeKey>::iterator fiter = frontier_vector.begin();fiter != frontier_vector.end(); fiter++)
+
+                frontier_vector.clear();
+                for(octomap::KeySet::iterator iter = frontierCells.begin(), end=frontierCells.end(); iter!= end; ++iter)
                 {
-                    fiternum++;
-                    if(*fiter == nei_key)
-                        fnum = fiternum;
-                }
-                if (fnum != 0)
-                    frontier_vector.erase(frontier_vector.begin()+fnum);
+                       frontier_vector.push_back(*iter);
+                }               
+                
             }
             cluster.push_back(temp_cell);
         }
+        // don't consider the cluster which is too small
+        if(cluster.size() < 10)
+            continue;
         cluster_gather.push_back(cluster);
     }
 
+    candidateCells.clear();
     int cluster_size=0;
     for(std::vector<std::vector<octomap::OcTreeKey> >::iterator iter = cluster_gather.begin(); iter!= cluster_gather.end(); iter++)
     {
         cluster_size++;
         octomap::OcTreeKey center_cell;
-        findCenter(*iter,center_cell);
-        octomap::point3d cpoint;
-        cpoint = globalOctoMap->keyToCoord(center_cell);
-        candidateCells.insert(center_cell);
+        if(findCenter(*iter,center_cell)){
+            //octomap::point3d cpoint;
+            //cpoint = globalOctoMap->keyToCoord(center_cell);
+            candidateCells.insert(center_cell);
+        }
+
     }
 }
 
