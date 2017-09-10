@@ -1808,7 +1808,6 @@ bool Tracking::computeExplorationMode(){
     featureCenter = 0;
     int featureCounter = 0;
 
-
     // compute the center of projected map points
     for(size_t i = 0; i < mCurrentFrame.mvpMapPoints.size(); i++){
         if(mCurrentFrame.mvpMapPoints[i]!=NULL){
@@ -1818,9 +1817,6 @@ bool Tracking::computeExplorationMode(){
     }
 
     featureCenter = featureCenter/featureCounter;
-    //Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
-    //Eigen::Vector3f eulerAngleKf = T_wb_eig.topLeftCorner<3,3>().eulerAngles(0,1,2);
-    //float curr_angle=float(eulerAngleKf(2));
     float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
     float curr_x = currPose.at<float>(0,3);
     float curr_y = currPose.at<float>(1,3);
@@ -1848,6 +1844,10 @@ bool Tracking::computeExplorationMode(){
         return true;
     }
 
+    float frontierAngleRelativeMax = 0;
+    float frontierAngleRelativeMin = 0;
+    float Bound1 = 0;
+    float Bound2 = 0;
 
     // determine turn right or left, and when to stop
     if(!exploreStart){
@@ -1862,6 +1862,37 @@ bool Tracking::computeExplorationMode(){
         exploreEnd=false;
         explore_reverse=false;
         exploreFinish = false;
+        // compute the frontier angles
+        frontierCentersDir.clear();
+        for(size_t i; i < frontierCenters.size(); i++){
+            float angle_frontierCenter = atan2f(frontierCenters[i][1] - curr_y, frontierCenters[i][0] - curr_x);
+            float angle_frontier_relative = angle_frontierCenter-explore_star_angle;
+            if(angle_frontier_relative>M_PI)
+            {
+                angle_frontier_relative=angle_frontier_relative-2*M_PI;
+            }
+            else if(angle_frontier_relative<-M_PI)
+            {
+                angle_frontier_relative=angle_frontier_relative+2*M_PI;
+            }
+            // the frontier is in the front or back, ignore
+            if(abs(angle_frontier_relative)>3*M_PI/4 || abs(angle_frontier_relative)<1*M_PI/4)
+                continue;            
+            frontierCentersDir.push_back(angle_frontier_relative);
+            if(angle_frontier_relative > frontierAngleRelativeMax)
+                frontierAngleRelativeMax = angle_frontier_relative;
+            if(angle_frontier_relative < frontierAngleRelativeMin)
+                frontierAngleRelativeMin = angle_frontier_relative;
+        }
+
+        if(explore == 1){
+            Bound1 = -frontierAngleRelativeMin;
+            Bound2 = frontierAngleRelativeMax;
+        }else if(explore == -1){
+            Bound1 = frontierAngleRelativeMax;
+            Bound2 = -frontierAngleRelativeMin;
+        }
+
     }
 
     float angle_diff=curr_angle-explore_star_angle;
@@ -1883,7 +1914,7 @@ bool Tracking::computeExplorationMode(){
     if(!exploreEnd && !explore_reverse)
     {
         //cout<<"is checking"<<endl;
-        if( (featureCounter<130) || (angle_diff>0.9*M_PI) )
+        if( (featureCounter<130) || (angle_diff>Bound1) )
         {
            // cout<<"feature low"<<endl;
             exploreEnd=true;
@@ -1910,7 +1941,7 @@ bool Tracking::computeExplorationMode(){
     // exploration toward the second point
     if(!exploreEnd && explore_reverse)
     {
-        if( (featureCounter<130) || (angle_diff>M_PI*0.9) )
+        if( (featureCounter<130) || (angle_diff>Bound2) )
         {
             exploreEnd=true;
             explore=-explore;

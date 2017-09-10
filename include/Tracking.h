@@ -174,6 +174,7 @@ public:
     float explore_star_angle;
     float explore_stop_diff;
     std::vector<std::vector<float>> frontierCenters;
+    std::vector<float> frontierCentersDir;
 
     bool recoverMode = false;
     bool recover_success=false;
