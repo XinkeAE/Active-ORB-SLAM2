@@ -86,6 +86,7 @@ public:
     void UpdateCollision(const std::vector<std::vector<float>> &bCollision);
     void UpdateLow(const std::vector<std::vector<float>> &bCollision);
     void UpdateFrontier(const std::vector<std::vector<float>> &frontier);
+    void UpdateFrontierCenter(const std::vector<std::vector<float>> &frontierCenter);
 
 
 public:
@@ -172,6 +173,7 @@ public:
     float featureCenter = 480;
     float explore_star_angle;
     float explore_stop_diff;
+    std::vector<std::vector<float>> frontierCenters;
 
     bool recoverMode = false;
     bool recover_success=false;

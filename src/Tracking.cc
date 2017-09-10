@@ -1974,4 +1974,11 @@ void Tracking::UpdateFrontier(const std::vector<std::vector<float>> &frontier)
     this->mpMapDrawer->SetCurrentFrontier(frontier);
 }
 
+void Tracking::UpdateFrontierCenter(const std::vector<std::vector<float>> &frontierCenter)
+{
+    this->mpMapDrawer->SetCurrentFrontierCenter(frontierCenter);  
+    frontierCenters.clear();
+    frontierCenters = frontierCenters; 
+}
+
 } //namespace ORB_SLAM
