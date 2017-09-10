@@ -85,6 +85,7 @@ public:
 
     void UpdateCollision(const std::vector<std::vector<float>> &bCollision);
     void UpdateLow(const std::vector<std::vector<float>> &bCollision);
+    void UpdateFrontier(const std::vector<std::vector<float>> &frontier);
 
 
 public:

@@ -12,6 +12,8 @@
 #include <octomap/octomap.h>
 #include <octomap/ColorOcTree.h>
 #include <octomap/math/Pose6D.h>
+#include <octomap/OcTreeLUT.h>
+#include <queue>
 
 #include "MapPoint.h"
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
@@ -51,6 +53,15 @@ public:
     vector<vector<float>> getLowProbPoints();
     bool calcOccupiedPoints();
 
+    // Frontier related
+    void findFrontier();
+    vector<vector<float>> getFrontier(); 
+    void clusterFrontier(); 
+    void bestFrontier(vector<float>sensorOrigin);
+    void findCenter(std::vector<octomap::OcTreeKey>& cluster, octomap::OcTreeKey& centercell);
+    void genNeighborCoord(float x,float y,float z);
+    void genNeighborCoord(octomap::OcTreeKey start_key, std::vector<octomap::point3d>& occupiedNeighbor);
+
 private:
     // Check if the thread should stop.
     bool CheckFinish();
@@ -89,6 +100,11 @@ private:
     float camera_cy;
     cv::Mat T_bc;
     cv::Mat T_wc_mat;    
+
+    // Frontier related
+    octomap::KeySet frontierCells;
+    octomap::KeySet candidateCells;
+    octomap::OcTreeLUT* lut;
 };
 
 }  // namespace ORB_SLAM

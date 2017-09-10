@@ -51,6 +51,8 @@ public:
     void SetCurrentCollision(const std::vector<std::vector<float>> &bCollision);
     void DrawMapLowProb();
     void SetCurrentLowProb(const std::vector<std::vector<float>> &bCollision);
+    void DrawMapFrontier();
+    void SetCurrentFrontier(const std::vector<std::vector<float>> &frontier);
 
     
 
@@ -60,6 +62,7 @@ private:
     std::vector<std::vector<double>> mPath;
     std::vector<std::vector<float>> mCollisionPts;
     std::vector<std::vector<float>> mLowPts;
+    std::vector<std::vector<float>> mFrontiers;
     float mKeyFrameSize;
     float mKeyFrameLineWidth;
     float mGraphLineWidth;
@@ -90,6 +93,7 @@ private:
 
     std::mutex mMutexCollision;
     std::mutex mMutexlow;
+    std::mutex mMutexFrontier;
 };
 
 } //namespace ORB_SLAM

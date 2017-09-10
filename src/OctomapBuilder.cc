@@ -3,7 +3,7 @@
 namespace ORB_SLAM2 {
 
 OctomapBuilder::OctomapBuilder(){
-    globalOctoMap = new octomap::OcTree(0.1f);
+    globalOctoMap = new octomap::OcTree(0.2f);
     globalOctoMap->setOccupancyThres(0.5);
     //globalOctoMap->setProbMiss(0.51);
     hasUpdate = false;
@@ -20,6 +20,8 @@ OctomapBuilder::OctomapBuilder(){
     depthFactor = 1/1027.6;
 
     T_bc = T_cb_mat.inv();
+
+    lut = new octomap::OcTreeLUT(16);
 
 }
 
@@ -40,7 +42,7 @@ void OctomapBuilder::Run() {
 
         octomap::pose6d T_wc_octo(
                 octomap::point3d(
-                        T_wc_eig(0,3), T_wc_eig(1,3), T_wc_eig(2,3)),
+                        T_wc_eig(0,3), T_wc_eig(1,3), 0), // for 3d case we need z coordinates
                 octomath::Quaternion(
                         q_wc.w(), q_wc.x(), q_wc.y(), q_wc.z()));
 
@@ -53,16 +55,19 @@ void OctomapBuilder::Run() {
                 float x = (float(n) - camera_cx) * z / camera_fx;
                 float y = (float(m) - camera_cy) * z / camera_fy;
                 if(z > 5) continue;
-                if( y > 0.25 || y < -0.2) continue;
-                y=0;
-                local_cloud.push_back(x,y,z);
+                if( y > 0.1 || y < -0.1) continue;
+                //y=0;
+                Eigen::Vector4f hPt;
+                hPt << x,y,z,1;
+                Eigen::Vector4f hPt_w = T_wc_eig * hPt;
+                local_cloud.push_back(hPt_w(0),hPt_w(1),0);
              }
         }
-        local_cloud.transform(T_wc_octo);
+        //local_cloud.transform(T_wc_octo);
         octomath::Vector3 vec3 = T_wc_octo.trans();
         unique_lock<mutex> lock2(mMutexRequest);
         globalOctoMap->insertPointCloud(
-                local_cloud, octomap::point3d(vec3.x(), vec3.y(), vec3.z()));
+                local_cloud, octomap::point3d(vec3.x(), vec3.y(), 0)); // for 3d case we need z coordinates
         globalOctoMap->updateInnerOccupancy();
 
         unsigned int maxDepth = globalOctoMap->getTreeDepth();
@@ -132,4 +137,186 @@ vector<vector<float>> OctomapBuilder::getOccupiedPoints() {
     
         return OccupiedPoints;
 }
+
+
+void OctomapBuilder::genNeighborCoord(octomap::OcTreeKey start_key, std::vector<octomap::point3d>& occupiedNeighbor) 
+{
+    occupiedNeighbor.clear();
+    octomap::OcTreeKey neighbor_key;
+    std::vector<int> dir = {0,1,2,3,6,7,8,9};
+    for (int i = 0; i < 8; i++) 
+    {
+        lut->genNeighborKey(start_key, dir[i], neighbor_key);
+        octomap::point3d query = globalOctoMap->keyToCoord(neighbor_key);
+        occupiedNeighbor.push_back(query);
+
+    }
+}
+
+void OctomapBuilder::findFrontier(){
+
+    frontierCells.clear();
+    bool neighbFree = false; 
+    bool neighbUnknown = false;
+
+    std::vector<octomap::point3d> neighbor;
+
+    for (auto it = globalOctoMap->begin(); it != globalOctoMap->end(); it++) {
+
+        float x = it.getCoordinate().x();
+        float y = it.getCoordinate().y();
+        float z = it.getCoordinate().z();
+
+        octomap::point3d cellPoint(x,y,z);
+        octomap::OcTreeKey key;
+
+        if(!globalOctoMap->coordToKeyChecked(cellPoint, key)){
+
+            cout << "Error in search: [" << cellPoint << "] is out of OcTree bounds!" << endl;
+            return;
+            
+        }
+
+		//check point state: free/occupied
+        octomap::OcTreeNode* node = globalOctoMap->search(key);      
+        
+        bool occupied = globalOctoMap->isNodeOccupied(node);
+
+        if(!occupied){
+            neighbFree = false;
+            neighbUnknown = false;
+
+            genNeighborCoord(key, neighbor);
+
+            for (std::vector<octomap::point3d>::iterator iter = neighbor.begin();iter != neighbor.end(); iter++)
+            {
+                    octomap::point3d neipoint=*iter;
+
+                    //check point state: free/unknown
+                    octomap::OcTreeNode* node = globalOctoMap->search(neipoint);
+                    if(node == NULL)
+                        neighbFree=1;
+                    else
+                    {
+                        if(!globalOctoMap->isNodeOccupied(node))
+                            neighbUnknown=1;
+                    }
+            }
+            if(neighbFree==1 && neighbUnknown==1)
+            {
+                frontierCells.insert(key);
+            }            
+
+        }
+
+    }
+
+}
+
+vector<vector<float>> OctomapBuilder::getFrontier(){
+    vector <vector<float>> frontier_vector;
+    for(octomap::KeySet::iterator iter = frontierCells.begin(), end=frontierCells.end(); iter!= end; ++iter)
+    {
+           octomap::point3d cell = globalOctoMap->keyToCoord(*iter);
+           frontier_vector.push_back({cell.x(),cell.y(),cell.z()});
+    }
+    return frontier_vector;    
+}
+
+
+
+void OctomapBuilder::findCenter(std::vector<octomap::OcTreeKey>& cluster, octomap::OcTreeKey& centerCell)
+{
+    //centerCell = cluster[0];
+    float x_sum = 0;
+    float y_sum = 0;
+    float z_sum = 0;
+    for(size_t i = 0; i <  cluster.size(); i++){
+        octomap::point3d cell = globalOctoMap->keyToCoord(cluster[i]);
+        x_sum += cell.x();
+        y_sum += cell.y();
+        z_sum += cell.z();
+    }
+
+    if (cluster.size() == 0){
+        std::cout << "cluster has zero size, something is wrong!" << std::endl;
+        return;
+    }
+
+    float x_mean = x_sum/cluster.size();
+    float y_mean = y_sum/cluster.size();
+    float z_mean = z_sum/cluster.size();
+
+    octomap::point3d center(x_mean, y_mean, z_mean);
+
+    globalOctoMap->coordToKeyChecked(center, centerCell);
+
+}
+
+void OctomapBuilder::clusterFrontier()
+{
+
+    std::vector <octomap::OcTreeKey> frontier_vector;
+    //preprocess put the frontier cells in frontiercells into a queue
+    for(octomap::KeySet::iterator iter = frontierCells.begin(), end=frontierCells.end(); iter!= end; ++iter)
+    {
+           frontier_vector.push_back(*iter);
+    }
+
+    std::queue<octomap::OcTreeKey> temp_queue;
+    std::vector<std::vector<octomap::OcTreeKey> > cluster_gather;
+    while(!frontier_vector.empty())
+    {
+        octomap::OcTreeKey f_cell;
+        octomap::OcTreeKey temp_cell;
+        f_cell = frontier_vector.front();
+        frontier_vector.erase(frontier_vector.begin());
+        temp_queue.push(f_cell);
+        octomap::point3d fcell_point;
+        fcell_point = globalOctoMap->keyToCoord(f_cell);
+        std::vector<octomap::point3d> neighbor;
+        std::vector<octomap::OcTreeKey> cluster;
+        
+        while(!temp_queue.empty())
+        {
+            temp_cell = temp_queue.front();
+            temp_queue.pop();
+            genNeighborCoord(temp_cell, neighbor) ;
+            for (std::vector<octomap::point3d>::iterator iter = neighbor.begin();iter != neighbor.end(); iter++)
+            {
+                octomap::point3d neipoint=*iter;
+                octomap::OcTreeKey nei_key;
+                globalOctoMap->coordToKeyChecked(neipoint, nei_key);
+                octomap::KeySet::iterator got = frontierCells.find(nei_key);
+                if (got == frontierCells.end())
+                    continue;
+                temp_queue.push(nei_key);
+                frontierCells.erase(nei_key);
+                int fiternum=0,fnum=0;
+                for(std::vector<octomap::OcTreeKey>::iterator fiter = frontier_vector.begin();fiter != frontier_vector.end(); fiter++)
+                {
+                    fiternum++;
+                    if(*fiter == nei_key)
+                        fnum = fiternum;
+                }
+                if (fnum != 0)
+                    frontier_vector.erase(frontier_vector.begin()+fnum);
+            }
+            cluster.push_back(temp_cell);
+        }
+        cluster_gather.push_back(cluster);
+    }
+
+    int cluster_size=0;
+    for(std::vector<std::vector<octomap::OcTreeKey> >::iterator iter = cluster_gather.begin(); iter!= cluster_gather.end(); iter++)
+    {
+        cluster_size++;
+        octomap::OcTreeKey center_cell;
+        findCenter(*iter,center_cell);
+        octomap::point3d cpoint;
+        cpoint = globalOctoMap->keyToCoord(center_cell);
+        candidateCells.insert(center_cell);
+    }
+}
+
 }  // namespace ORB_SLAM

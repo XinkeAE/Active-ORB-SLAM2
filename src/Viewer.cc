@@ -135,6 +135,7 @@ void Viewer::Run()
         mpMapDrawer->DrawPath();
         mpMapDrawer->DrawMapCollision();
         mpMapDrawer->DrawMapLowProb();
+        mpMapDrawer->DrawMapFrontier();
 
         pangolin::FinishFrame();
 

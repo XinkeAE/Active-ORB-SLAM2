@@ -99,7 +99,7 @@ void MapDrawer::DrawMapCollision()
         return;
 
     int rows = static_cast<int>(mCollisionPts.size());
-    glPointSize(9*mPointSize);
+    glPointSize(5*mPointSize);
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,1.0);
 
@@ -139,7 +139,7 @@ void MapDrawer::DrawMapLowProb()
     }
 
     int rows = static_cast<int>(mLowPts.size());
-    glPointSize(9*mPointSize);
+    glPointSize(5*mPointSize);
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
@@ -148,6 +148,39 @@ void MapDrawer::DrawMapLowProb()
         cv::Mat P_w=(cv::Mat_<float>(4,1) << mLowPts[i][0],
                     mLowPts[i][1],
                     mLowPts[i][2],
+                    1);
+        cv::Mat P_s=T_sw_mat*P_w;
+        glVertex3f(P_s.at<float>(0,0),P_s.at<float>(1,0),P_s.at<float>(2,0));
+    }
+    glEnd();
+}
+
+// visualize the frontier
+void MapDrawer::SetCurrentFrontier(const std::vector<std::vector<float>> &frontier)
+{
+    unique_lock<mutex> lock(mMutexFrontier);
+    mFrontiers=frontier;
+}
+
+void MapDrawer::DrawMapFrontier()
+{
+    unique_lock<mutex> lock(mMutexFrontier);
+
+    if(mFrontiers.empty())
+    {
+        return;
+    }
+
+    int rows = static_cast<int>(mFrontiers.size());
+    glPointSize(9*mPointSize);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,0.5,0.1);
+
+    for(int i=0; i<rows; i++)
+    {   
+        cv::Mat P_w=(cv::Mat_<float>(4,1) << mFrontiers[i][0],
+                    mFrontiers[i][1],
+                    mFrontiers[i][2],
                     1);
         cv::Mat P_s=T_sw_mat*P_w;
         glVertex3f(P_s.at<float>(0,0),P_s.at<float>(1,0),P_s.at<float>(2,0));

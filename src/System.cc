@@ -353,6 +353,13 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                 vector<vector<float>> lowptrs=mpOctomapBuilder->getLowProbPoints();
                 mpTracker->UpdateCollision(occupiedPoints);
                 mpTracker->UpdateLow(lowptrs);
+
+                // frontier computation
+                mpOctomapBuilder->findFrontier();
+                vector<vector<float>> frontier = mpOctomapBuilder->getFrontier();
+                //cout << frontier.size() << endl;
+                mpTracker->UpdateFrontier(frontier);
+
                 if(occupiedPoints.size()!=0)
                     octomapInitialize = true;
             }

@@ -1969,4 +1969,9 @@ void Tracking::UpdateLow(const std::vector<std::vector<float>> &bCollision)
     this->mpMapDrawer->SetCurrentLowProb(bCollision);
 }
 
+void Tracking::UpdateFrontier(const std::vector<std::vector<float>> &frontier)
+{
+    this->mpMapDrawer->SetCurrentFrontier(frontier);
+}
+
 } //namespace ORB_SLAM
