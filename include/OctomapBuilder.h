@@ -104,6 +104,7 @@ private:
 
     // Frontier related
     octomap::KeySet frontierCells;
+    octomap::KeySet frontierCells_store;
     octomap::KeySet candidateCells;
     octomap::OcTreeLUT* lut;
 };

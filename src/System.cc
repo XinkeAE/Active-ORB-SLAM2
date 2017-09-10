@@ -307,14 +307,17 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                     floorMap.clear();
                     frontierMap.clear();
                     floorMap = mpOctomapBuilder->getOccupiedPoints();
+
                     frontierMap = mpOctomapBuilder->getFrontier();
 
-                    std::cout << "before insert the size is = " << floorMap.size() << endl;
+                    //std::cout << "before insert the size is = " << floorMap.size() << endl;
+                    //std::cout << "before insert the frontier size is = " << frontierMap.size() << endl;
+                    
+                    if(planStarted)
+                        floorMap.insert(floorMap.end(), frontierMap.begin(), frontierMap.end());
 
-                    floorMap.insert(floorMap.end(), frontierMap.begin(), frontierMap.end());
-
-                    std::cout << "after insert the size is = " << floorMap.size() << endl;
-                    std::cout << "after insert the frontier size is = " << frontierMap.size() << endl;
+                    //std::cout << "after insert the size is = " << floorMap.size() << endl;
+                    //std::cout << "after insert the frontier size is = " << frontierMap.size() << endl;
                     
 
                     mpPlanner->setFloorMap( floorMap );

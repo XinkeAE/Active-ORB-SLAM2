@@ -156,6 +156,7 @@ void OctomapBuilder::genNeighborCoord(octomap::OcTreeKey start_key, std::vector<
 void OctomapBuilder::findFrontier(){
 
     frontierCells.clear();
+    frontierCells_store.clear();
     bool neighbFree = false; 
     bool neighbUnknown = false;
 
@@ -211,11 +212,13 @@ void OctomapBuilder::findFrontier(){
 
     }
 
+    frontierCells_store = frontierCells;
+
 }
 
 vector<vector<float>> OctomapBuilder::getFrontier(){
     vector <vector<float>> frontier_vector;
-    for(octomap::KeySet::iterator iter = frontierCells.begin(), end=frontierCells.end(); iter!= end; ++iter)
+    for(octomap::KeySet::iterator iter = frontierCells_store.begin(), end=frontierCells_store.end(); iter!= end; ++iter)
     {
            octomap::point3d cell = globalOctoMap->keyToCoord(*iter);
            frontier_vector.push_back({cell.x(),cell.y(),cell.z()});

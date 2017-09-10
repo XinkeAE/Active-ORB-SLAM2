@@ -255,7 +255,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 
         
         if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty() &&!goalDetected && !exploreFinish){
-            
+            cout << "enter the function" << endl;
             computeExplorationMode();
             
         }
@@ -1894,6 +1894,9 @@ bool Tracking::computeExplorationMode(){
         }
 
     }
+
+    std::cout << "Bound1 = " << Bound1 << std::endl;
+    std::cout << "Bound2 = " << Bound2 << std::endl;
 
     float angle_diff=curr_angle-explore_star_angle;
     if(angle_diff>M_PI)
