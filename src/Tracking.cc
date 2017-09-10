@@ -1889,6 +1889,12 @@ bool Tracking::computeExplorationMode(){
                 
             }
             
+            std::vector<std::vector<double>> doubleOccupied(occupied.begin(), occupied.end());
+            StateValidChecker svc(doubleOccupied);
+            if( !svc.checkMotionStraightLine({frontierCenters[i][0], frontierCenters[i][1]},{curr_x, curr_y}) ){
+                continue;
+            }
+            
             // the frontier is in the front or back, ignore
             //if(abs(angle_frontier_relative)>9*M_PI/10 || abs(angle_frontier_relative)<1*M_PI/10)
             //    continue;
@@ -2013,6 +2019,11 @@ bool Tracking::checkWayPointRecover(){
 void Tracking::UpdateCollision(const std::vector<std::vector<float>> &bCollision)
 {
     this->mpMapDrawer->SetCurrentCollision(bCollision);
+    this->occupied.clear();
+    for(size_t i = 0; i < bCollision.size(); i++){
+        this->occupied.push_back({double(bCollision[i][0]), double(bCollision[i][1]) });
+    }
+
 }
 
 
@@ -2024,6 +2035,8 @@ void Tracking::UpdateLow(const std::vector<std::vector<float>> &bCollision)
 void Tracking::UpdateFrontier(const std::vector<std::vector<float>> &frontier)
 {
     this->mpMapDrawer->SetCurrentFrontier(frontier);
+    this->frontier.clear();
+    this->frontier = frontier;
 }
 
 void Tracking::UpdateFrontierCenter(const std::vector<std::vector<float>> &frontierCenter)

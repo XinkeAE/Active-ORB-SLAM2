@@ -70,6 +70,16 @@ public:
 		collisionDetection(FloorMap)
 	{};
 
+	StateValidChecker(ppMatrix FloorMap) :
+		turn_radius(TURN_RADIUS),
+		robot_r(ROBOT_RADIUS),
+		dt(DT),
+		heuristicValidityCheck(true),
+		maxDistHeuristicValidity(MAX_DIST_HEURISTIC),
+		StartState(3),
+		collisionDetection(FloorMap)
+		{};
+
 	void retrieveStateVector(const ob::State *state, Vector &a);
 	void updateStateVector(const ob::State *state, Vector q);
 	void printStateVector(const ob::State *state);
@@ -120,6 +130,8 @@ public:
 	double MotionCostLength(ppMatrix) const;
 	double MotionCostCamera(ppMatrix) const;
 	double MotionCost(const ob::State *, const ob::State *, const int = 1) const;
+
+	bool checkMotionStraightLine(Vector q1, Vector q2);
 
 private:
 	ob::StateSpace *stateSpace_;

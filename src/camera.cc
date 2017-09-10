@@ -102,6 +102,35 @@ camera::camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
 
 }
 
+camera::camera()
+{
+	std::cout << "Initializing camera data..." << std::endl;
+
+    fx = 520.49;
+    fy = 522.47;
+    cx = 474.95;
+    cy = 264.27;
+    MaxX = 950;
+    MinX = 10;
+    MaxY = 530;
+    MinY = 10;
+    max_dist = 6;
+    min_dist = 0.1;
+
+    feature_threshold = 20;
+
+    T_sw<<0,   -1.0000,         0,    -0.1000,
+          0,         0,   -1.0000,         0,
+          1.0000,         0,         0,   -0.2500,
+          0,         0,        0,    1.0000;
+
+    T_bc <<0 ,        0 ,   1.0000 ,   0.2500 ,
+            -1.0000 ,        0  ,       0 ,  -0.1000,
+            0 ,  -1.0000 ,        0  ,       0,
+            0 ,        0  ,       0   , 1.0000;
+
+}
+
 
 int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
     int num_pt=map_vec.size();

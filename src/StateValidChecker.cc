@@ -49,6 +49,26 @@ void StateValidChecker::printStateVector(const ob::State *state) {
 	cout << "q: "; printVector(q);
 }
 
+bool StateValidChecker::checkMotionStraightLine(Vector q1, Vector q2) {
+    
+    Vector q(2);
+
+    double d = normDistance(q1, q2, 2);
+    double dd = 0.05;
+    int nd = d / dd;
+
+    for (int i = 0; i <= nd; i++) {
+        // Interpolate
+        q[0] = q1[0] + (double)i / nd * q2[0];
+        q[1] = q1[1] + (double)i / nd * q2[1];
+
+        if (!check_collisions(q, 0))
+            return false;
+    }
+
+    return true;
+}
+
 // ==========================================================================================================
 
 void StateValidChecker::setStartState(ob::State *st) {

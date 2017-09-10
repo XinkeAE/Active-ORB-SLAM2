@@ -54,6 +54,8 @@ public:
     // todo: compute the gridElement?Inv
     camera(map_data MD, int);
 
+    camera();
+
     camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts);
     
     std::vector<std::vector<float> > read_text(std::string points);

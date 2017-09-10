@@ -40,6 +40,7 @@
 #include "System.h"
 #include "Planning.h"
 #include "OctomapBuilder.h"
+#include "StateValidChecker.h"
 
 #include <mutex>
 
@@ -174,6 +175,8 @@ public:
     float explore_star_angle;
     float explore_stop_diff;
     std::vector<std::vector<float>> frontierCenters;
+    std::vector<std::vector<float>> frontier;
+    std::vector<std::vector<double>> occupied;
     std::vector<float> frontierCentersDir;
     float Bound1 = 0;
     float Bound2 = 0;
