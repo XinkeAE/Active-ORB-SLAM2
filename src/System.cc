@@ -294,15 +294,30 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
         std::vector<std::vector<double>> planned_trajectory;
 
+        std::vector<std::vector<float>> floorMap;
+        std::vector<std::vector<float>> frontierMap;
+
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
         if(octomapInitialize){
             if(!mpTracker->goalDetected){
                 if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0 && mpTracker->exploreFinish)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
                     
-                    // update the floor map in planning
-                    if(mpOctomapBuilder->calcOccupiedPoints())
-                        mpPlanner->setFloorMap( mpOctomapBuilder->getOccupiedPoints() );
+                    // get the floor map in planning
+                    floorMap.clear();
+                    frontierMap.clear();
+                    floorMap = mpOctomapBuilder->getOccupiedPoints();
+                    frontierMap = mpOctomapBuilder->getFrontier();
+
+                    std::cout << "before insert the size is = " << floorMap.size() << endl;
+
+                    floorMap.insert(floorMap.end(), frontierMap.begin(), frontierMap.end());
+
+                    std::cout << "after insert the size is = " << floorMap.size() << endl;
+                    std::cout << "after insert the frontier size is = " << frontierMap.size() << endl;
+                    
+
+                    mpPlanner->setFloorMap( floorMap );
 
                     mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
                     planRequestSent = true; 
@@ -315,9 +330,15 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
                 if(!planRequestSent&&(!goal_reached)){
 
-                    // update the floor map in planning
-                    if(mpOctomapBuilder->calcOccupiedPoints())
-                        mpPlanner->setFloorMap( mpOctomapBuilder->getOccupiedPoints() );
+                    // get the floor map in planning
+                    floorMap.clear();
+                    frontierMap.clear();
+                    floorMap = mpOctomapBuilder->getOccupiedPoints();
+                    frontierMap = mpOctomapBuilder->getFrontier();
+
+                    floorMap.insert(floorMap.end(), frontierMap.begin(), frontierMap.end());
+
+                    mpPlanner->setFloorMap( floorMap );
 
                     mpPlanner->SendPlanningRequest(currPose, nullptr);
                     planRequestSent = true; 
@@ -363,7 +384,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                 mpTracker->UpdateFrontier(frontier);
                 mpTracker->UpdateFrontierCenter(frontier_center);
 
-                if(occupiedPoints.size()!=0)
+                if(occupiedPoints.size()!=0 && frontier.size()!=0)
                     octomapInitialize = true;
             }
            

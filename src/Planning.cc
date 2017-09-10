@@ -115,7 +115,7 @@ void Planning::Run() {
 
             //std::cout << planningMap.size() << std::endl;
 
-            int threshold = 0;
+            int threshold = 40;
             int threshold_explore = 0;
 
             cout << maxDist[0] << endl;
