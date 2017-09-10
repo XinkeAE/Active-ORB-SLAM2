@@ -300,7 +300,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
         if(octomapInitialize){
-            if(!mpTracker->goalDetected){
+            if(!mpTracker->goalDetected && !mpTracker->recover_success){
                 if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0 && mpTracker->exploreFinish)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
                     
                     // get the floor map in planning
@@ -355,7 +355,10 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
    
         // If update the trajectory then we reset the plan request flag
-        if (!planned_trajectory.empty() && (mpTracker->planned_trajectory.size()!=planned_trajectory.size()) ) {
+        if (!planned_trajectory.empty() && (mpTracker->planned_trajectory.size()!=planned_trajectory.size()) &&  mpPlanner->planningFinish ) {
+
+            size_t counter = mpTracker->planned_trajectory.size();
+
             x_end = planned_trajectory.back()[0];
             y_end = planned_trajectory.back()[1];
             //mpTracker->planned_trajectory = planned_trajectory;
@@ -363,6 +366,13 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                 std::vector<double> wayPoint = planned_trajectory[planCopyIter];
                 mpTracker->planned_trajectory.push_back(wayPoint);
             }
+
+            cout << "*********************** In System.cc *********************" << endl;
+            cout << "copied planned trajectory size = " << mpTracker->planned_trajectory.size() - counter << endl;
+            cout << "copied planned trajectory first = [ " << mpTracker->planned_trajectory[counter][0] << ", " << mpTracker->planned_trajectory[counter][1] << ", " << mpTracker->planned_trajectory[counter][2] << "] " << endl;
+            cout << "copied planned trajectory end = [ " << mpTracker->planned_trajectory[mpTracker->planned_trajectory.size()-1][0] << ", " << mpTracker->planned_trajectory[mpTracker->planned_trajectory.size()-1][1] << ", " << mpTracker->planned_trajectory[mpTracker->planned_trajectory.size()-1][2] << "] " << endl;            
+            cout << "*********************** End System.cc *********************" << endl;
+
             mpTracker->exploreFinish = false;
             mpTracker->goalDetected=false;
             mpTracker->recover_success=false;                        
@@ -852,6 +862,10 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 std::vector<double> System::getCurrWaypoint()
 {
     return mpTracker->curr_des;
+}
+
+bool System::getRecoverMode(){
+    return mpTracker->recoverMode;
 }
 
 int System::getExplorationStatus(){

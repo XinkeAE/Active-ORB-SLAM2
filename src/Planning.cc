@@ -4,6 +4,8 @@
 
 #include <numeric>
 
+#include <iostream>
+
 void compute_std(std::vector<double> v, double & mean, double & stdev)
 {
     double sum = std::accumulate(v.begin(), v.end(), 0.0);
@@ -58,6 +60,7 @@ void Planning::Run() {
             minDist.clear();
             foundRatio.clear();
             keyframePose.clear();
+            planningFinish = false;
 
             //cout << __LINE__ << endl;
 
@@ -115,7 +118,7 @@ void Planning::Run() {
 
             //std::cout << planningMap.size() << std::endl;
 
-            int threshold = 40;
+            int threshold = 60;
             int threshold_explore = 0;
 
             cout << maxDist[0] << endl;
@@ -222,6 +225,11 @@ void Planning::Run() {
             }
             cout << q_goal[0] << " "  << q_goal[1] << " " << q_goal[2] << endl;  
             */ 
+            cout << "*********************** In Planning.cc *********************" << endl;
+            cout << "copied planned trajectory size = " << current_trajectory.size() << endl;
+            cout << "copied planned trajectory first = [ " << current_trajectory[0][0] << ", " << current_trajectory[0][1] << ", " << current_trajectory[0][2] << "] " << endl;
+            cout << "copied planned trajectory last = [ " << current_trajectory[current_trajectory.size()-1][0] << ", " << current_trajectory[current_trajectory.size()-1][1] << ", " << current_trajectory[current_trajectory.size()-1][2] << "] " << endl;            
+            cout << "*********************** End Planning.cc *********************" << endl;
                                
 
             // check the point when the visibility constrain is not satisfied
@@ -236,6 +244,8 @@ void Planning::Run() {
                 trajectory_lock.unlock();
             }
             //cout << __LINE__ << endl;
+
+            planningFinish = true;
             
             // Ack the request.
             AckRequest();

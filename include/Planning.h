@@ -50,6 +50,8 @@ public:
 	// Set floor map
 	void setFloorMap(vector<vector<float>> floorMap_);
 
+	bool planningFinish = false;
+
 private:
 	// Check if the thread should stop.
 	bool CheckFinish();

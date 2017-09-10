@@ -149,6 +149,8 @@ public:
 
     int getExplorationStatus();
 
+    bool getRecoverMode();
+
 private:
 
     // Input sensor

@@ -203,11 +203,13 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 
     depthFactor = mpSLAM->GetDepthScaleFactor();
 
-    if(mpSLAM->GetTrackingState() == 3){
+    /*if(mpSLAM->GetTrackingState() == 3){
         trackingLostPublisher.publish(true);
     }else{
         trackingLostPublisher.publish(false);
-    }
+    }*/
+
+    trackingLostPublisher.publish(mpSLAM->getRecoverMode());
     
     if (pose.empty())
         return;

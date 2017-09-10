@@ -254,14 +254,13 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         checkWayPoint();
 
         
-        if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty() &&!goalDetected && !exploreFinish){
-            cout << "enter the function" << endl;
+        if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty() &&!goalDetected && !exploreFinish && !recover_success){
             computeExplorationMode();
             
         }
 
     }
-    /*
+    
     // recover from the LOST state
     
     if(mState==LOST){
@@ -274,36 +273,38 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     {
         if(recoverMode)
         {
-            cout<<"Recover Successfully"<<endl;
-            float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
-            float curr_x = currPose.at<float>(0,3);
-            float curr_y = currPose.at<float>(1,3);
-            if(path_it_counter<planned_trajectory.size()){
-                auto it=planned_trajectory.begin() + path_it_counter;
-                for(it; it!=planned_trajectory.end();it++)
-                {
-                    *it={curr_x,curr_y,curr_angle};
+            succ_counter++;
+            if(succ_counter>50)
+            {
+                succ_counter=0;
+                cout<<"Recover Successfully"<<endl;
+                float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
+                float curr_x = currPose.at<float>(0,3);
+                float curr_y = currPose.at<float>(1,3);
+                if(path_it_counter<planned_trajectory.size()){
+                    auto it=planned_trajectory.begin() + path_it_counter;
+                    for(it; it!=planned_trajectory.end();it++)
+                    {
+                        *it={curr_x,curr_y,curr_angle};
+                    }
+                // planned_trajectory.erase(planned_trajectory.begin() + path_it_counter - 1, planned_trajectory.end());
                 }
-               // planned_trajectory.erase(planned_trajectory.begin() + path_it_counter - 1, planned_trajectory.end());
-            }
-            if(path_it_counter > 0){
-                //planned_trajectory.push_back({curr_x,curr_y,curr_angle});
-                //path_it_counter =planned_trajectory.size()-1;
-                curr_des = {curr_x,curr_y,curr_angle};
+                if(path_it_counter > 0){
+                    //planned_trajectory.push_back({curr_x,curr_y,curr_angle});
+                    //path_it_counter =planned_trajectory.size()-1;
+                    curr_des = {curr_x,curr_y,curr_angle};
 
-                mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
-                mpMapDrawer->SetCurrentPath(planned_trajectory);
-                mpMapDrawer->SetCurrentCounter(path_it_counter);
-
+                    mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+                    mpMapDrawer->SetCurrentPath(planned_trajectory);
+                    mpMapDrawer->SetCurrentCounter(path_it_counter);
+                }
                 recover_success=true;
-
+                recoverCounter = 0;
+                recoverMode = false;
             }
         }
-        recoverCounter = 0;
-        recoverMode = false;
-        //cout << "not in recover mode" << endl;
     }
-    */
+    
     return mCurrentFrame.mTcw.clone();
 }
 
@@ -1784,7 +1785,11 @@ bool Tracking::checkWayPoint()
                 dir_des.push_back((curr_des[1]-prev_des[1])/d_des);
                 d_cur = (x - prev_des[0])*dir_des[0] + (y - prev_des[1])*dir_des[1];
             }
-            if(d_des <= (d_cur+0.03))
+
+            double d_des_curr=sqrt((curr_des[0]-x)*(curr_des[0]-x)+(curr_des[1]-y)*(curr_des[1]-y));
+
+            //if(d_des <= (d_cur+0.03))
+            if(d_des_curr < 0.09)
             {
                 //cout << "move one point forward" << endl;
                 path_it_counter++;
@@ -1844,11 +1849,6 @@ bool Tracking::computeExplorationMode(){
         return true;
     }
 
-    float frontierAngleRelativeMax = 0;
-    float frontierAngleRelativeMin = 0;
-    float Bound1 = 0;
-    float Bound2 = 0;
-
     // determine turn right or left, and when to stop
     if(!exploreStart){
         if(featureCenter > 480){
@@ -1864,7 +1864,10 @@ bool Tracking::computeExplorationMode(){
         exploreFinish = false;
         // compute the frontier angles
         frontierCentersDir.clear();
-        for(size_t i; i < frontierCenters.size(); i++){
+        float frontierAngleRelativeMax = 0;
+        float frontierAngleRelativeMin = 0;
+        //cout << frontierCenters.size() << endl;
+        for(size_t i = 0; i < frontierCenters.size(); i++){
             float angle_frontierCenter = atan2f(frontierCenters[i][1] - curr_y, frontierCenters[i][0] - curr_x);
             float angle_frontier_relative = angle_frontierCenter-explore_star_angle;
             if(angle_frontier_relative>M_PI)
@@ -1875,14 +1878,27 @@ bool Tracking::computeExplorationMode(){
             {
                 angle_frontier_relative=angle_frontier_relative+2*M_PI;
             }
+            //cout << "angle frontier relative = " << angle_frontier_relative << endl;    
+            
+            float dist_fc = sqrt( (frontierCenters[i][1] - curr_y)*(frontierCenters[i][1] - curr_y) + (frontierCenters[i][0] - curr_x)*(frontierCenters[i][0] - curr_x) );
+            //cout << "distance = " << dist_fc << endl;
+            if(dist_fc > 3){
+
+                //cout << "greater than dist" << endl;
+                continue;
+                
+            }
+            
             // the frontier is in the front or back, ignore
-            if(abs(angle_frontier_relative)>3*M_PI/4 || abs(angle_frontier_relative)<1*M_PI/4)
-                continue;            
+            //if(abs(angle_frontier_relative)>9*M_PI/10 || abs(angle_frontier_relative)<1*M_PI/10)
+            //    continue;
+
+            //cout << "angle frontier relative = " << angle_frontier_relative << endl;     
             frontierCentersDir.push_back(angle_frontier_relative);
             if(angle_frontier_relative > frontierAngleRelativeMax)
-                frontierAngleRelativeMax = angle_frontier_relative;
+                frontierAngleRelativeMax = angle_frontier_relative + 15/57.3;
             if(angle_frontier_relative < frontierAngleRelativeMin)
-                frontierAngleRelativeMin = angle_frontier_relative;
+                frontierAngleRelativeMin = angle_frontier_relative - 15/57.3;
         }
 
         if(explore == 1){
@@ -1895,8 +1911,8 @@ bool Tracking::computeExplorationMode(){
 
     }
 
-    std::cout << "Bound1 = " << Bound1 << std::endl;
-    std::cout << "Bound2 = " << Bound2 << std::endl;
+    //std::cout << "Bound1 = " << Bound1 << std::endl;
+    //std::cout << "Bound2 = " << Bound2 << std::endl;
 
     float angle_diff=curr_angle-explore_star_angle;
     if(angle_diff>M_PI)
@@ -1916,10 +1932,9 @@ bool Tracking::computeExplorationMode(){
     // exploration toward the first point
     if(!exploreEnd && !explore_reverse)
     {
-        //cout<<"is checking"<<endl;
+        //cout<<"state1"<<endl;
         if( (featureCounter<130) || (angle_diff>Bound1) )
         {
-           // cout<<"feature low"<<endl;
             exploreEnd=true;
             explore_reverse=false;
             explore=-explore;
@@ -1931,6 +1946,7 @@ bool Tracking::computeExplorationMode(){
     // return back
     if(exploreEnd && !explore_reverse)
     {
+        //cout<<"state2"<<endl;        
         //cout<<"reverse"<<endl;
        // cout<<"angle_diff = "<<angle_diff<<endl;
         if(angle_diff<explore_stop_diff)
@@ -1944,6 +1960,7 @@ bool Tracking::computeExplorationMode(){
     // exploration toward the second point
     if(!exploreEnd && explore_reverse)
     {
+        //cout<<"state3"<<endl;        
         if( (featureCounter<130) || (angle_diff>Bound2) )
         {
             exploreEnd=true;
@@ -1954,6 +1971,7 @@ bool Tracking::computeExplorationMode(){
     // return back
     if(exploreEnd && explore_reverse)
     {
+        //cout<<"state4"<<endl;        
        // cout<<"angle_diff = "<<angle_diff<<endl;
         if(angle_diff<explore_stop_diff)
         {
@@ -2011,8 +2029,8 @@ void Tracking::UpdateFrontier(const std::vector<std::vector<float>> &frontier)
 void Tracking::UpdateFrontierCenter(const std::vector<std::vector<float>> &frontierCenter)
 {
     this->mpMapDrawer->SetCurrentFrontierCenter(frontierCenter);  
-    frontierCenters.clear();
-    frontierCenters = frontierCenters; 
+    this->frontierCenters.clear();
+    this->frontierCenters = frontierCenter; 
 }
 
 } //namespace ORB_SLAM

@@ -134,7 +134,7 @@ void Viewer::Run()
 
         mpMapDrawer->DrawPath();
         mpMapDrawer->DrawMapCollision();
-        mpMapDrawer->DrawMapLowProb();
+        //mpMapDrawer->DrawMapLowProb();
         mpMapDrawer->DrawMapFrontier();
         mpMapDrawer->DrawMapFrontierCenter();
 

@@ -52,10 +52,11 @@ void OctomapBuilder::Run() {
                 float d = depth.at<float>(m,n);
                 if(d < 0.05) continue;
                 float z = d;
+                
                 float x = (float(n) - camera_cx) * z / camera_fx;
                 float y = (float(m) - camera_cy) * z / camera_fy;
-                if(z > 5) continue;
-                if( y > 0.1 || y < -0.1) continue;
+                if(z > 8) continue;
+                if( y > 0.2 || y < -0.25) continue;
                 //y=0;
                 Eigen::Vector4f hPt;
                 hPt << x,y,z,1;

@@ -175,9 +175,13 @@ public:
     float explore_stop_diff;
     std::vector<std::vector<float>> frontierCenters;
     std::vector<float> frontierCentersDir;
+    float Bound1 = 0;
+    float Bound2 = 0;
+
 
     bool recoverMode = false;
     bool recover_success=false;
+    size_t succ_counter=0;
     size_t recoverCounter = 0;
     size_t waypointCounter = 0;
     bool checkWayPointRecover();
