@@ -229,7 +229,8 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         if(mbRGB)
             cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
         else
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);    float x=currPose.at<float>(0,3);
+            float y=currPose.at<float>(1,3);
     }
 
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
@@ -253,10 +254,47 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         currPose = T_wb_initial_mat.inv()*T_wb_mat;
         checkWayPoint();
 
-        
-        if(path_it_counter == (planned_trajectory.size() -1) && !planned_trajectory.empty() &&!goalDetected && !exploreFinish && !recover_success){
-            computeExplorationMode();
+
+        float dist_expr = 0;
+
+        if(planned_trajectory.size() > 1){
+
+
+            float x_curr=currPose.at<float>(0,3);
+            float y_curr=currPose.at<float>(1,3);
+            float end_des_x = planned_trajectory.back()[0];
+            float end_des_y = planned_trajectory.back()[1];
+            float second_end_des_x = (planned_trajectory.end()[-2])[0];
+            float second_end_des_y = (planned_trajectory.end()[-2])[1];
+
+            //dist_expr = sqrt((x_curr - end_des_x)*(x_curr - end_des_x) + (y_curr - end_des_y)*(y_curr - end_des_y));
+
+            /*
+            double d_des=sqrt((end_des_x-second_end_des_x)*(end_des_x-second_end_des_x)+(end_des_y-second_end_des_y)*(end_des_y-second_end_des_y));
+            double d_cur=0.03;
+            vector<double> dir_des;
+            if(d_des != 0){
+                dir_des.push_back((end_des_x-second_end_des_x)/d_des);
+                dir_des.push_back((end_des_y-second_end_des_y)/d_des);
+                d_cur = (x_curr - second_end_des_x)*dir_des[0] + (y_curr - second_end_des_y)*dir_des[1];
+            }
+
+
+            if(d_des <= (d_cur+0.08))
+                exploreTrigger = true;
+            */
             
+            
+            dist_expr = sqrt((x_curr - end_des_x)*(x_curr - end_des_x) + (y_curr - end_des_y)*(y_curr - end_des_y));          
+            if(dist_expr < 0.08 && dist_expr > 0.001 && trajectoryUpdated)
+                exploreTrigger = true;
+            
+        }
+
+        
+        //if(path_it_counter == (planned_trajectory.size()) && !planned_trajectory.empty() &&!goalDetected && !exploreFinish && !recover_success){
+        if(exploreTrigger && !planned_trajectory.empty() &&!goalDetected && !exploreFinish && !recover_success){
+            computeExplorationMode();
         }
 
     }
@@ -1788,8 +1826,8 @@ bool Tracking::checkWayPoint()
 
             double d_des_curr=sqrt((curr_des[0]-x)*(curr_des[0]-x)+(curr_des[1]-y)*(curr_des[1]-y));
 
-            //if(d_des <= (d_cur+0.03))
-            if(d_des_curr < 0.09)
+            if(d_des <= (d_cur+0.1))
+            //if(d_des_curr < 0.09)
             {
                 //cout << "move one point forward" << endl;
                 path_it_counter++;
@@ -1835,6 +1873,7 @@ bool Tracking::computeExplorationMode(){
     float goal_y = 1.69;
     float goal_theta = -1.57;
 
+    /*
     if((curr_x > 4.5)&&((fabs(goal_theta - curr_angle) < 0.5))){
         goalDetected = true;
         explore = 0;
@@ -1845,9 +1884,9 @@ bool Tracking::computeExplorationMode(){
         //planned_trajectory.pop_back();
         planned_trajectory.back() = {curr_x, curr_y, curr_angle};
         curr_des = {curr_x, curr_y, curr_angle};
-        path_it_counter=planned_trajectory.size()-1;
+        //path_it_counter=planned_trajectory.size()-1;
         return true;
-    }
+    }*/
 
     // determine turn right or left, and when to stop
     if(!exploreStart){
@@ -1891,9 +1930,9 @@ bool Tracking::computeExplorationMode(){
             
             std::vector<std::vector<double>> doubleOccupied(occupied.begin(), occupied.end());
             StateValidChecker svc(doubleOccupied);
-            if( !svc.checkMotionStraightLine({frontierCenters[i][0], frontierCenters[i][1]},{curr_x, curr_y}) ){
-                continue;
-            }
+            //if( !svc.checkMotionStraightLine({frontierCenters[i][0], frontierCenters[i][1]},{curr_x, curr_y}) ){
+            //    continue;
+            //}
             
             // the frontier is in the front or back, ignore
             //if(abs(angle_frontier_relative)>9*M_PI/10 || abs(angle_frontier_relative)<1*M_PI/10)
@@ -1987,6 +2026,8 @@ bool Tracking::computeExplorationMode(){
             exploreEnd = false;
             explore_reverse = false;
             exploreFinish = true;
+            exploreTrigger = false;
+            trajectoryUpdated = false;
         }
 
     }

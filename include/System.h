@@ -175,6 +175,7 @@ private:
     // Octomap building.
     OctomapBuilder* mpOctomapBuilder;
     bool octomapInitialize = false;
+    size_t octomapCounter = 0;
 
     // Local Mapper. It manages the local map and performs local bundle adjustment.
     LocalMapping* mpLocalMapper;

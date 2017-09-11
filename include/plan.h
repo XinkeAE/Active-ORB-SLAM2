@@ -110,6 +110,9 @@ public:
 	/** Set the current known environment map for the planning */
 	void set_FloorMap(ppMatrix);
 
+	/** Return status of planning (exact or approximated solution */
+	bool isApproximate();
+
 private:
 	int n = 3;
 
@@ -120,6 +123,8 @@ private:
 	int feature_thres;
 
 	ppMatrix FloorMap;
+
+	ob::PlannerStatus solved;
 
 };
 

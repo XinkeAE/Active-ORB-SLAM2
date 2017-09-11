@@ -296,6 +296,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
         std::vector<std::vector<float>> floorMap;
         std::vector<std::vector<float>> frontierMap;
+        bool isApproxSoln = true;
 
         // TODO: Change the arguments.
         // At the beginning we plan, once the robot approach the end of trajectory list, replan
@@ -315,14 +316,50 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                     
                     if(planStarted)
                         floorMap.insert(floorMap.end(), frontierMap.begin(), frontierMap.end());
+                    else{
+                        floorMap.push_back({-0.5, -0.3});
+                        floorMap.push_back({-0.5, -0.2});
+                        floorMap.push_back({-0.5, -0.1});
+                        floorMap.push_back({-0.5, 0.0});
+                        floorMap.push_back({-0.5, 0.1});
+                        floorMap.push_back({-0.5, 0.2});
+                        floorMap.push_back({-0.5, 0.3});
+                        floorMap.push_back({-0.5, 0.4});
+                        floorMap.push_back({-0.5, 0.6});
+                        floorMap.push_back({-0.5, 0.7});
+                        floorMap.push_back({-0.5, 0.8});
+                        floorMap.push_back({-0.5, 0.9});
+                        floorMap.push_back({-0.5, 1.2});
+                        floorMap.push_back({-0.5, 1.4});
+                        //floorMap.push_back({-0.5, 1.6});
+                        //floorMap.push_back({-0.5, 1.8});
+                        floorMap.push_back({-0.4, -0.5});
+                        floorMap.push_back({-0.3, -0.5});
+                        floorMap.push_back({-0.2, -0.5});
+                        floorMap.push_back({-0.1, -0.5});
+                        floorMap.push_back({-0.0, -0.5});
+                        floorMap.push_back({0.1, -0.5});
+                        floorMap.push_back({0.2, -0.5});
+                        floorMap.push_back({-0.4, 1.4});
+                        floorMap.push_back({-0.3, 1.4});
+                        floorMap.push_back({-0.2, 1.4});
+                        floorMap.push_back({-0.1, 1.4});
+                        floorMap.push_back({-0.0, 1.4});
+                        floorMap.push_back({0.1, 1.4});
+                        floorMap.push_back({0.2, 1.4});
+
+                    }
 
                     //std::cout << "after insert the size is = " << floorMap.size() << endl;
                     //std::cout << "after insert the frontier size is = " << frontierMap.size() << endl;
                     
-
                     mpPlanner->setFloorMap( floorMap );
 
-                    mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
+                    isApproxSoln = mpPlanner->approxSolution;
+
+                    if(isApproxSoln)
+                        mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
+
                     planRequestSent = true; 
                     planStarted = true;
                 }
@@ -343,7 +380,11 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
                     mpPlanner->setFloorMap( floorMap );
 
-                    mpPlanner->SendPlanningRequest(currPose, nullptr);
+                    isApproxSoln = mpPlanner->approxSolution;
+                    
+                    if(isApproxSoln)
+                        mpPlanner->SendPlanningRequest(currPose, nullptr);
+
                     planRequestSent = true; 
                 
                     
@@ -375,7 +416,8 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
             mpTracker->exploreFinish = false;
             mpTracker->goalDetected=false;
-            mpTracker->recover_success=false;                        
+            mpTracker->recover_success=false;
+            mpTracker->trajectoryUpdated = true;                         
             planRequestSent = false;
         }
         

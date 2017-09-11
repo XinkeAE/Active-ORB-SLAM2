@@ -191,6 +191,10 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
         // There are, add them
         while (const base::State *st = pis_.nextStart())
         {
+            Vector q(3);
+            retrieveStateVector(st, q);
+            if  (!check_collisions(q, 0.05))
+                  OMPL_ERROR("%s: Invalid start state!", getName().c_str());
             Motion *motion = new Motion(si_);
             si_->copyState(motion->state, st);
             motion->cost = opt_->identityCost();
@@ -257,6 +261,8 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
     // our functor for sorting nearest neighbors
     CostIndexCompare compareFn(costs, *opt_);
 
+    Vector q_goal(3), q_cur(3);
+
     while (ptc == false)
     {
         iterations_++;
@@ -265,8 +271,10 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
 
         // sample random state (with goal biasing)
         // Goal samples are only sampled until maxSampleCount() goals are in the tree, to prohibit duplicate goal states.
-        if (goal_s && goalMotions_.size() < goal_s->maxSampleCount() && rng_.uniform01() < goalBias_ && goal_s->canSample())
+        if (goal_s && goalMotions_.size() < goal_s->maxSampleCount() && rng_.uniform01() < goalBias_ && goal_s->canSample()) {
             goal_s->sampleGoal(rstate);
+            retrieveStateVector(rstate, q_goal);
+        }
         else
         {
             // Attempt to generate a sample, if we fail (e.g., too many rejection attempts), skip the remainder of this loop and return to try again
@@ -467,6 +475,7 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
 
             // Add the new motion to the goalMotion_ list, if it satisfies the goal
             double distanceFromGoal;
+            retrieveStateVector(motion->state, q_cur); // for approximated check
             if (goal->isSatisfied(motion->state, &distanceFromGoal))
             {
                 goalMotions_.push_back(motion);
@@ -528,10 +537,13 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
             }
 
             // Checking for approximate solution (closest state found to the goal)
-            if (goalMotions_.size() == 0 && distanceFromGoal < approximatedist)
-            {
-                approximation = motion;
-                approximatedist = distanceFromGoal;
+            if (goalMotions_.size() == 0) {
+                double d = normDistance(q_goal, q_cur, 2);
+                if( d < approximatedist)
+                {
+                    approximation = motion;
+                    approximatedist = d;
+                }
             }
         }
 

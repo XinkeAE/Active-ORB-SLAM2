@@ -166,6 +166,8 @@ public:
 
     // exploration mode 0: not in exploration mode; -1: explore left; 1: explore right
     int explore = 0 ;
+    bool trajectoryUpdated = false;
+    bool exploreTrigger = false;
     bool exploreStart = false;
     bool exploreEnd = false;
     bool exploreFinish = false;

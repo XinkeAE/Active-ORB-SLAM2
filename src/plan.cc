@@ -159,6 +159,15 @@ void plan_slam::set_featureThreshold(int num) {
 	feature_thres = num;
 }
 
+bool plan_slam::isApproximate() {
+	if (solved ==  ob::PlannerStatus::APPROXIMATE_SOLUTION)
+		return true;
+	if (solved ==  ob::PlannerStatus::EXACT_SOLUTION)
+		return false;
+
+	return true;
+}
+
 bool plan_slam::plan(Vector q_start, Vector q_goal, double runtime, plannerType p_type, planningObjective o_type) {
 
 	// construct the state space we are planning in
@@ -232,7 +241,7 @@ bool plan_slam::plan(Vector q_start, Vector q_goal, double runtime, plannerType 
 
 	 // attempt to solve the problem within one second of planning time
 	 clock_t st = clock();
-	 ob::PlannerStatus solved = planner->solve(runtime);
+	 solved = planner->solve(runtime);
 	 double Ttime = double(clock() - st) / CLOCKS_PER_SEC;
 
 	if (solved) {

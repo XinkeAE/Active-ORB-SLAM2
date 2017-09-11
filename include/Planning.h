@@ -52,6 +52,8 @@ public:
 
 	bool planningFinish = false;
 
+	bool approxSolution = true;
+
 private:
 	// Check if the thread should stop.
 	bool CheckFinish();

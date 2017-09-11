@@ -28,7 +28,7 @@ Planning::Planning(cv::Mat goal_pose, Map* pMap){
     //p_type = PLANNER_RRT;
     o_type = OBJECTIVE_PATHLENGTH;
 
-    q_start = {0, 0, 0};
+    q_start = {0, 0.0, 0};
     q_goal = {5.03, -1.69, -1.5707};
     //q_goal={3.5, 1.3, -1};
 
@@ -206,11 +206,13 @@ void Planning::Run() {
                 //Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
                 float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
                 q_start = {x_curr, y_curr, curr_angle};
-                planned_trajectory.pop_back();
+                //planned_trajectory.pop_back();
             }
             
             // do actual planning
             pl->plan(q_start, q_curr_goal, 5, p_type, o_type);
+
+            approxSolution = pl->isApproximate();
 
             counter ++;
             // save trajectory

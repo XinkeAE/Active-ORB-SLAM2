@@ -53,7 +53,7 @@ public:
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),
-		heuristicValidityCheck(true),
+		heuristicValidityCheck(false),
 		maxDistHeuristicValidity(MAX_DIST_HEURISTIC),
 		StartState(3),
 		collisionDetection(FloorMap)
@@ -64,7 +64,7 @@ public:
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),
-		heuristicValidityCheck(true),
+		heuristicValidityCheck(false),
 		maxDistHeuristicValidity(MAX_DIST_HEURISTIC),
 		StartState(3),
 		collisionDetection(FloorMap)
@@ -74,7 +74,7 @@ public:
 		turn_radius(TURN_RADIUS),
 		robot_r(ROBOT_RADIUS),
 		dt(DT),
-		heuristicValidityCheck(true),
+		heuristicValidityCheck(false),
 		maxDistHeuristicValidity(MAX_DIST_HEURISTIC),
 		StartState(3),
 		collisionDetection(FloorMap)
