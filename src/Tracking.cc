@@ -1873,20 +1873,23 @@ bool Tracking::computeExplorationMode(){
     float goal_y = 1.69;
     float goal_theta = -1.57;
 
-    /*
+    
     if((curr_x > 4.5)&&((fabs(goal_theta - curr_angle) < 0.5))){
         goalDetected = true;
         explore = 0;
         exploreStart = false;
         exploreEnd = false;
-        explore_reverse=false;        
+        explore_reverse = false;
+        exploreFinish = true;
+        exploreTrigger = false;
+        trajectoryUpdated = false;       
        // path_it_counter++;
         //planned_trajectory.pop_back();
         planned_trajectory.back() = {curr_x, curr_y, curr_angle};
         curr_des = {curr_x, curr_y, curr_angle};
         //path_it_counter=planned_trajectory.size()-1;
         return true;
-    }*/
+    }
 
     // determine turn right or left, and when to stop
     if(!exploreStart){
