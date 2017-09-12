@@ -1936,12 +1936,12 @@ bool Tracking::computeExplorationMode(){
                 continue;
                 
             }*/
-            
+
             std::vector<std::vector<double>> doubleOccupied(occupied.begin(), occupied.end());
             StateValidChecker svc(doubleOccupied);
             if( !svc.checkMotionStraightLine({frontierCenters[i][0], frontierCenters[i][1]},{curr_x, curr_y}) ){
                 cout << "occluded frontier: [ " << frontierCenters[i][0] << ", " << frontierCenters[i][1] << " ] " << endl;
-                //continue;
+                continue;
             }
             
             // the frontier is in the front or back, ignore
