@@ -1875,6 +1875,8 @@ bool Tracking::computeExplorationMode(){
 
     
     if((curr_x > 4.5)&&((fabs(goal_theta - curr_angle) < 0.5))){
+        goalDetectedCounter++;
+        if(goalDetectedCounter>100){
         goalDetected = true;
         explore = 0;
         exploreStart = false;
@@ -1882,13 +1884,15 @@ bool Tracking::computeExplorationMode(){
         explore_reverse = false;
         exploreFinish = true;
         exploreTrigger = false;
-        trajectoryUpdated = false;       
+        trajectoryUpdated = false; 
+        goalDetectedCounter=0;      
        // path_it_counter++;
         //planned_trajectory.pop_back();
         planned_trajectory.back() = {curr_x, curr_y, curr_angle};
         curr_des = {curr_x, curr_y, curr_angle};
         //path_it_counter=planned_trajectory.size()-1;
         return true;
+        }
     }
 
     // determine turn right or left, and when to stop
@@ -1922,20 +1926,23 @@ bool Tracking::computeExplorationMode(){
             }
             //cout << "angle frontier relative = " << angle_frontier_relative << endl;    
             
-            float dist_fc = sqrt( (frontierCenters[i][1] - curr_y)*(frontierCenters[i][1] - curr_y) + (frontierCenters[i][0] - curr_x)*(frontierCenters[i][0] - curr_x) );
+            //float dist_fc = sqrt( (frontierCenters[i][1] - curr_y)*(frontierCenters[i][1] - curr_y) + (frontierCenters[i][0] - curr_x)*(frontierCenters[i][0] - curr_x) );
             //cout << "distance = " << dist_fc << endl;
+
+            /*
             if(dist_fc > 3){
 
                 //cout << "greater than dist" << endl;
                 continue;
                 
-            }
+            }*/
             
             std::vector<std::vector<double>> doubleOccupied(occupied.begin(), occupied.end());
             StateValidChecker svc(doubleOccupied);
-            //if( !svc.checkMotionStraightLine({frontierCenters[i][0], frontierCenters[i][1]},{curr_x, curr_y}) ){
-            //    continue;
-            //}
+            if( !svc.checkMotionStraightLine({frontierCenters[i][0], frontierCenters[i][1]},{curr_x, curr_y}) ){
+                cout << "occluded frontier: [ " << frontierCenters[i][0] << ", " << frontierCenters[i][1] << " ] " << endl;
+                //continue;
+            }
             
             // the frontier is in the front or back, ignore
             //if(abs(angle_frontier_relative)>9*M_PI/10 || abs(angle_frontier_relative)<1*M_PI/10)
@@ -1981,7 +1988,7 @@ bool Tracking::computeExplorationMode(){
     if(!exploreEnd && !explore_reverse)
     {
         //cout<<"state1"<<endl;
-        if( (featureCounter<130) || (angle_diff>Bound1) )
+        if( (featureCounter<100) || (angle_diff>Bound1) )
         {
             exploreEnd=true;
             explore_reverse=false;
@@ -2009,7 +2016,7 @@ bool Tracking::computeExplorationMode(){
     if(!exploreEnd && explore_reverse)
     {
         //cout<<"state3"<<endl;        
-        if( (featureCounter<130) || (angle_diff>Bound2) )
+        if( (featureCounter<100) || (angle_diff>Bound2) )
         {
             exploreEnd=true;
             explore=-explore;

@@ -368,7 +368,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
             }else{
 
-                if(!planRequestSent&&(!goal_reached)&&(mpTracker->explore==0 && (mpTracker->exploreFinish||mpTracker->recover_success))){
+                if(!planRequestSent&&(!goal_reached)&& ( (mpTracker->explore==0 && (mpTracker->exploreFinish) ) || mpTracker->recover_success ) ){
 
                     // get the floor map in planning
                     floorMap.clear();

@@ -182,6 +182,7 @@ public:
     std::vector<float> frontierCentersDir;
     float Bound1 = 0;
     float Bound2 = 0;
+    size_t goalDetectedCounter = 0;
 
 
     bool recoverMode = false;

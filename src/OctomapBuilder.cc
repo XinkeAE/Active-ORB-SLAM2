@@ -3,7 +3,7 @@
 namespace ORB_SLAM2 {
 
 OctomapBuilder::OctomapBuilder(){
-    globalOctoMap = new octomap::OcTree(0.1f);
+    globalOctoMap = new octomap::OcTree(0.15f);
     globalOctoMap->setOccupancyThres(0.5);
     //globalOctoMap->setProbMiss(0.51);
     hasUpdate = false;
