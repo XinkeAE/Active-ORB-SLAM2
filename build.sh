@@ -36,5 +36,3 @@ if [ ! ./Vocabulary/ORBvoc.bin ]; then
    echo "Converting vocabulary to binary"
    ./tools/bin_vocabulary    
 fi
-
-
