@@ -48,17 +48,18 @@ chmod +x build.sh
 This will create **libORB_SLAM2.so**  at *lib* folder and the executables **mono_tum**, **mono_kitti**, **rgbd_tum**, **stereo_kitti**, **mono_euroc** and **stereo_euroc** in *Examples* folder.
 
 #3. Building ROS
-...
+```
 chmod +x build_ros.sh
 ./build_ros.sh
-...
+```
 
 #4. Specify the goal pose in planning.cc and system.cc
 changing line 32 in planning.cc
 changing line 278 - 280 in system.cc
 
 #5. Run ros driver by running the script
+```
 ./kinect.sh
-
+```
 
 
