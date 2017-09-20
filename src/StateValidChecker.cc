@@ -218,8 +218,6 @@ void StateValidChecker::log_path_file(ppMatrix M) {
 
 	mf.open("./paths/path.txt");
 
-	//mf << M.size() << endl;
-
 	for (int i = 0; i < M.size(); i++) {
 		for (int j = 0; j < M[0].size(); j++)
 			mf << M[i][j] << " ";
@@ -356,9 +354,6 @@ TW_path_data StateValidChecker::GetShortestPath(Vector q1, Vector q2) const {
 		vwt.valid = false;
 		return vwt;
 	}
-
-	//v = {dir, dir, dir};
-	//w = {s1*v[0]/turn_radius, 0, s2*v[2]/turn_radius};
 
 	vwt.valid = true;
 	vwt.v = {dir, dir, dir};
@@ -532,8 +527,6 @@ double StateValidChecker::MotionCostCamera(ppMatrix Q) const {
 
 	double C = 0;
 	for (int i = 1; i < Q.size()-1; i++) {
-		//cout << Q[i][0] << " " << Q[i][1] << " " << Q[i][2] << endl;
-
 		int c = countVisible(Q[i][0], Q[i][1], Q[i][2]);
 		C += c < feature_threshold ? 1./1e-4 : 1./(double)c;
 	}
@@ -576,9 +569,3 @@ double StateValidChecker::MotionCost(const ob::State *s1, const ob::State *s2, c
 		return MotionCostCamera(Q);
 	}
 }
-
-
-
-
-
-

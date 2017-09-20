@@ -203,12 +203,6 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 
     depthFactor = mpSLAM->GetDepthScaleFactor();
 
-    /*if(mpSLAM->GetTrackingState() == 3){
-        trackingLostPublisher.publish(true);
-    }else{
-        trackingLostPublisher.publish(false);
-    }*/
-
     trackingLostPublisher.publish(mpSLAM->getRecoverMode());
     
     if (pose.empty())
@@ -237,69 +231,6 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         pose_out_.pose.orientation.z = pose_orientation.getZ();
         pose_out_.pose.orientation.w = pose_orientation.getW();
 
-        // build octomap
-        /*
-        if(mpSLAM->GetKeyframeStatus()){
-
-            cv::Mat depth = cv_ptrD->image.clone();
-            depth.convertTo(depth,CV_32F,depthFactor);
-
-            T_wc_mat = cv::Mat(T_wb_mat*T_cb_mat.inv());
-            tf::Transform T_wc_tf = cvMatToTF(T_wc_mat);
-
-            octomap::pose6d T_wc_octo = octomap::poseTfToOctomap(T_wc_tf);
-
-            octomap::Pointcloud local_cloud;
-
-            for(int m=0; m<depth.rows;m++){
-                for (int n=0; n<depth.cols; n++){
-
-                    float d = depth.ptr<float>(m)[n];
-                    if(d == 0)
-                        continue;
-                    
-                    float z = d;
-                    float x = (float(n) - camera_cx) * z / camera_fx;
-                    float y = (float(m) - camera_cy) * z / camera_fy;
-
-                    if(z > 5)
-                        continue;
-
-                    if( y > 0.25 || y < -0.2)
-                        continue;
-
-                    //y = 0;
-
-                    local_cloud.push_back(x,y,z);
-
-                }
-            }
-
-            local_cloud.transform(T_wc_octo);
-
-            // slow!!!
-            globalOctoMap->insertPointCloud(local_cloud, octomap::point3d(T_wc_tf.getOrigin().getX(),
-                                                                        T_wc_tf.getOrigin().getY(),
-                                                                        T_wc_tf.getOrigin().getZ()));
-
-
-
-            //globalOctoMap->updateInnerOccupancy();
-
-            
-            octomap_msgs::binaryMapToMsg(*globalOctoMap, octomap_out_);
-
-            octomap_out_.binary = 1;
-            octomap_out_.id = 1;
-            octomap_out_.resolution = 0.05f;
-            octomap_out_.header.frame_id = "/map";
-            octomap_out_.header.stamp = cv_ptrRGB->header.stamp;
-            
-            octomapPublisher.publish(octomap_out_);
-        
-        }
-        octomapPublisher.publish(octomap_out_);*/
-
         if(initialized){
             posePublisher.publish(pose_out_);
 
@@ -322,7 +253,6 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
                 dest_out_.x = float(curr_dest[0]);
                 dest_out_.y = float(curr_dest[1]);
                 dest_out_.theta = float(curr_dest[2]);
-                //cout << "desired position: x = " << dest_out_.x << " , y = " << dest_out_.y << " , theta = " << dest_out_.theta << endl;
                 currDestPublisher.publish(dest_out_);
             }
 
@@ -338,12 +268,10 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 tf::Transform ImageGrabber::cvMatToTF ( cv::Mat Tcw ) {
     tf::Transform cam_to_first_keyframe_transform;
     // invert since Tcw (transform from world to camera)
-    //cv::Mat pose = Tcw.inv();
     cv::Mat pose = Tcw;
 
     //Extract transformation from the raw orb SLAM pose
     tf::Vector3 origin;
-    //tf::Quaternion transform_quat;
     tf::Matrix3x3 transform_matrix;
 
     origin.setValue ( pose.at<float> ( 0, 3 ), pose.at<float> ( 1, 3 ), pose.at<float> ( 2, 3 ) );

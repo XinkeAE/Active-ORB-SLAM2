@@ -311,9 +311,6 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
                     frontierMap = mpOctomapBuilder->getFrontier();
 
-                    //std::cout << "before insert the size is = " << floorMap.size() << endl;
-                    //std::cout << "before insert the frontier size is = " << frontierMap.size() << endl;
-                    
                     if(planStarted)
                         floorMap.insert(floorMap.end(), frontierMap.begin(), frontierMap.end());
                     else{
@@ -350,9 +347,6 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
                     }
 
-                    //std::cout << "after insert the size is = " << floorMap.size() << endl;
-                    //std::cout << "after insert the frontier size is = " << frontierMap.size() << endl;
-                    
                     mpPlanner->setFloorMap( floorMap );
 
                     isApproxSoln = mpPlanner->approxSolution;
@@ -435,7 +429,6 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
                 vector<vector<float>> frontier = mpOctomapBuilder->getFrontier();
                 mpOctomapBuilder->clusterFrontier();
                 vector<vector<float>> frontier_center = mpOctomapBuilder->getFrontierCenter();
-                //cout << frontier.size() << endl;
                 mpTracker->UpdateFrontier(frontier);
                 mpTracker->UpdateFrontierCenter(frontier_center);
 
@@ -591,12 +584,6 @@ bool System::LoadMapCameraPara(const string& filename) {
 void System::SaveTrajectoryTUM(const string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
-    /*if(mSensor==MONOCULAR)
-    {
-        cerr << "ERROR: SaveTrajectoryTUM cannot be used for monocular." << endl;
-        return;
-    }*/
-
     vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
@@ -743,13 +730,9 @@ void System::SaveKeyFrameTrajectoryTUM_fe(const string &filename)
         if(pKF->isBad())
             continue;
 
-        cout << "pass0!" << endl;
         cv::Mat R = pKF->GetFirstEstRotation().t();
-        cout << "pass1!" << endl;
         vector<float> q = Converter::toQuaternion(R);
-        cout << "pass2!" << endl;
         cv::Mat t = pKF->GetFirstEstCameraCenter();
-        cout << "pass!" << endl;
 
         cv::Mat R_p = pKF->GetFirstEstRotation_parent().t();
         vector<float> q_p = Converter::toQuaternion(R_p);
@@ -788,8 +771,6 @@ void System::SaveMapPoints(const string &filename)
         cv::Mat Normal = pPt->GetNormal();
         int number_observed = pPt->Observations();
 
-        //KeyFrame* pKF = pPt->GetReferenceKeyFrame();
-
         std::vector<float> view_cos_vector;
         float view_mean;
         float view_std;
@@ -802,7 +783,6 @@ void System::SaveMapPoints(const string &filename)
         {
             cv::Mat normali = pPt->mNormalVectors[j];
             view_cos_vector.push_back(normali.dot(Normal));   
-            //std::cout << j << " view cosine = " <<  normali.dot(Normal) << std::endl; 
 
             float theta = atan2(normali.at<float>(0,0),normali.at<float>(2,0));
             theta_s.push_back(theta);
@@ -864,7 +844,6 @@ void System::SaveTrajectoryKITTI(const string &filename)
 
         while(pKF->isBad())
         {
-          //  cout << "bad parent" << endl;
             Trw = Trw*pKF->mTcp;
             pKF = pKF->GetParent();
         }
