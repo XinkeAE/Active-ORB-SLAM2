@@ -48,6 +48,7 @@ void Frame::InitializeClass(const cv::Mat &imLeftOrGray) {
 	  cerr << "in Frame::InitializeClass" << endl;
 	  ComputeImageBounds(imLeftOrGray);
 
+	  // cout << "FRAME_GRID_COLS=" << FRAME_GRID_COLS << " mnMaxX=" << mnMaxX << " mnMinX=" << mnMinX << endl;
 	  Frame::mfGridElementWidthInv=static_cast<float>(FRAME_GRID_COLS)/(Frame::mnMaxX-Frame::mnMinX);
 	  Frame::mfGridElementHeightInv=static_cast<float>(FRAME_GRID_ROWS)/(Frame::mnMaxY-Frame::mnMinY);
 	  Frame::mbInitialComputations=false;

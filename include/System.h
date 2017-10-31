@@ -25,6 +25,7 @@
 #include<string>
 #include<thread>
 #include<opencv2/core/core.hpp>
+#include<vector>
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
@@ -136,14 +137,19 @@ public:
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
-    // for planning
-    //std::vector<std::vector<float>> vector_test;
+    // store the current pose for 2D planning and control
     float x_curr = 0;
     float y_curr = 0;
+    float theta_curr = 0;
+
     bool planRequestSent = false;
-    bool planStarted = false;
-    float x_end = 0;
-    float y_end = 0;
+
+    // decide if goal is reached
+    bool goal_set = false;
+    float x_goal = 0.0;
+    float y_goal = 0.0;
+    float theta_goal = 0.0;
+    bool goalReached = false;
 
     std::vector<double> getCurrWaypoint();
 
@@ -170,8 +176,9 @@ private:
     // performs relocalization if tracking fails.
     Tracking* mpTracker;
 
-	// Perform planning.
+	// Planning thread
     Planning* mpPlanner;
+
     // Octomap building.
     OctomapBuilder* mpOctomapBuilder;
     bool octomapInitialize = false;

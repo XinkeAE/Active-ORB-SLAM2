@@ -4,7 +4,7 @@
 
 camera::camera(map_data MD, int thres)
 {
-    std::cout << "Initializing camera data..." << std::endl;
+	std::cout << "Initializing camera data..." << std::endl;
 
     fx = 520.49;
     fy = 522.47;
@@ -39,8 +39,8 @@ camera::camera(map_data MD, int thres)
    foundRatio = v_float_found_ratio;
 
    for (int i = 0; i < MD.Map.size(); i++) {
-      vector<float> v_float(MD.Map[i].begin(), MD.Map[i].end());
-       map_vec.push_back(v_float);
+      	vector<float> v_float(MD.Map[i].begin(), MD.Map[i].end());
+       	map_vec.push_back(v_float);
    }   
 
     T_sw<<0,   -1.0000,         0,    -0.1000,
@@ -72,7 +72,7 @@ camera::camera(map_data MD, int thres)
 
 camera::camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
 {
-    std::cout << "Initializing camera data..." << std::endl;
+	std::cout << "Initializing camera data..." << std::endl;
 
     fx = 520.49;
     fy = 522.47;
@@ -104,7 +104,7 @@ camera::camera(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
 
 camera::camera()
 {
-    std::cout << "Initializing camera data..." << std::endl;
+	std::cout << "Initializing camera data..." << std::endl;
 
     fx = 520.49;
     fy = 522.47;
@@ -135,6 +135,8 @@ camera::camera()
 int camera::countVisible(float x_w, float y_w, float theta_rad_w) const {
     int num_pt=map_vec.size();
     float num_visible=0;
+
+    //cout << x_w << " " << y_w << " " << theta_rad_w << endl;
 
     // I modified this section to enable the function to be const. (requirement of OMPL)
     Eigen::Matrix4f T_wb;
@@ -169,6 +171,7 @@ int camera::countVisible(cv::Mat Twb) const {
     int num_pt=map_vec.size();
     float num_visible=0;
 
+    //cout << x_w << " " << y_w << " " << theta_rad_w << endl;
 
     // I modified this section to enable the function to be const. (requirement of OMPL)
     Eigen::Matrix<float, 4,4> T_wb;
@@ -194,14 +197,56 @@ int camera::countVisible(cv::Mat Twb) const {
     return int(round(num_visible));
 }
 
-bool camera::IsStateVisiblilty(double x_w, double y_w, double theta_rad_w, int ths) {
-    int cur_ths;
-    if (ths == -1)
-        cur_ths = feature_threshold;
-    else
-        cur_ths = ths;
+/*
+visible_info camera::countVisible(cv::Mat Twb) const {
     
-    return countVisible(x_w, y_w, theta_rad_w) > cur_ths;
+    int num_pt=map_vec.size();
+    float num_visible=0;
+    
+    visible_info visibilityInfo;
+    visibilityInfo.gridInfo.setZero();
+    
+    //cout << x_w << " " << y_w << " " << theta_rad_w << endl;
+
+    // I modified this section to enable the function to be const. (requirement of OMPL)
+    Eigen::Matrix<float, 4,4> T_wb;
+    cv2eigen(Twb, T_wb);
+    
+    Eigen::Matrix4f T_sc = T_sw * T_wb * T_bc;
+    Eigen::Matrix4f T_cs = T_sc.inverse();
+    
+    if (1) {//setRobotPose(x_w, y_w, theta_rad_w)) {
+        
+        for (int i = 0; i < num_pt; ++i)
+        {   
+            proj_info mpProjection;
+            mpProjection = isInFrustum(map_vec[i],  upper_bound[i],  lower_bound[i], T_sc, T_cs, max_range[i], min_range[i]);
+            if(mpProjection.success){                
+                num_visible+=foundRatio[i];                
+                visibilityInfo.gridInfo(mpProjection.y_grid, mpProjection.x_grid) += foundRatio[i];                
+            }
+                
+        }
+    }   
+    else
+    {
+        std::cout<<"Cannot get current robot pose"<<std::endl;
+    } 
+
+    visibilityInfo.number = int(round(num_visible));
+
+    return visibilityInfo;
+
+}*/
+
+bool camera::IsStateVisiblilty(double x_w, double y_w, double theta_rad_w, int ths) {
+    	int cur_ths;
+    	if (ths == -1)
+    		cur_ths = feature_threshold;
+    	else
+    		cur_ths = ths;
+    
+    	return countVisible(x_w, y_w, theta_rad_w) > cur_ths;
 }
 
 
@@ -271,14 +316,14 @@ proj_info camera::isInFrustum(std::vector<float> MapPoint_s, float upper_limit, 
 
 std::vector<std::vector<float> > camera::read_text(std::string filename)
 {
-    std::ifstream file(filename.c_str());
+    std::ifstream          file(filename.c_str());
     if (!file.is_open()) {
-        cout << "Error opening file " << filename.c_str() << endl;
-        exit(1);
+    	cout << "Error opening file " << filename.c_str() << endl;
+    	exit(1);
     }
     
     std::string  line;
-    std::cout << "open file: " << filename << std::endl;
+    std::cout<<"open file: "<<filename<<std::endl;
     std::vector<std::vector<float>> out;
 
     // Read one line at a time into the variable line:
@@ -294,6 +339,7 @@ std::vector<std::vector<float> > camera::read_text(std::string filename)
         {
             // Add the integers from a line to a 1D array (vector)
             lineData.push_back(value);
+            //std::cout<<value<<" ";
         }
         // When all the integers have been read, add the 1D array
         // into a 2D array (as one line in the 2D array)
@@ -373,6 +419,7 @@ void camera::update_map(std::vector<ORB_SLAM2::MapPoint*> &vpPts)
     }
 }
 
+
 void camera::compute_std(std::vector<float> v, float & mean, float & stdev)
 {
     float sum = std::accumulate(v.begin(), v.end(), 0.0);
@@ -384,3 +431,31 @@ void camera::compute_std(std::vector<float> v, float & mean, float & stdev)
     float sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
     stdev = std::sqrt(sq_sum / v.size());
 }
+
+
+
+
+/*
+cv::Mat_<float> camera::vec2cvMat_2D(std::vector< std::vector<float> > &inVec){
+  int rows = static_cast<int>(inVec.size());
+    int cols = static_cast<int>(inVec[0].size());
+
+    //std::cout<<rows<<" "<<cols<<std::endl;
+
+    cv::Mat_<float> resmat(rows, cols);
+    for (int i = 0; i < rows; i++)
+    {
+        resmat.row(i) = cv::Mat(inVec[i]).t();
+    }
+    std::cout<<" Load Finished!"<<std::endl;
+    return resmat;
+}*/
+
+
+
+
+
+
+
+
+

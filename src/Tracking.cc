@@ -242,6 +242,8 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 
     // compute the pose in the body frame
     if(!mCurrentFrame.mTcw.empty() && mState==OK){
+
+        // compute pose
         cv::Mat Tsc = mCurrentFrame.mTcw.clone().inv();
         cv::Mat T_wb_mat = cv::Mat(T_ws_mat*Tsc*T_cb_mat);
         if(!TwbInitialized){
@@ -250,73 +252,67 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
             if(TwbCounter > 5)
                 TwbInitialized = true;
         }
-        
         currPose = T_wb_initial_mat.inv()*T_wb_mat;
+        x_curr = currPose.at<float>(0,3);
+        y_curr = currPose.at<float>(1,3);
+        theta_curr = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
+
+        // check if the goal is reached
+        isGoalReached(x_curr, y_curr, theta_curr);
+
+        // set current desired pose
         checkWayPoint();
-
-
-        float dist_expr = 0;
-
-        if(planned_trajectory.size() > 1){
-
-
-            float x_curr=currPose.at<float>(0,3);
-            float y_curr=currPose.at<float>(1,3);
-            float end_des_x = planned_trajectory.back()[0];
-            float end_des_y = planned_trajectory.back()[1];
-            float second_end_des_x = (planned_trajectory.end()[-2])[0];
-            float second_end_des_y = (planned_trajectory.end()[-2])[1];
-
-            dist_expr = sqrt((x_curr - end_des_x)*(x_curr - end_des_x) + (y_curr - end_des_y)*(y_curr - end_des_y));          
-            if(dist_expr < 0.08 && dist_expr > 0.001 && trajectoryUpdated)
-                exploreTrigger = true;
-            
-        }
-        if(exploreTrigger && !planned_trajectory.empty() &&!goalDetected && !exploreFinish && !recover_success){
+        
+        if( (needExploration() || explorationStatus!=0)&&!goalReached ){
             computeExplorationMode();
         }
 
     }
-    
+
     // recover from the LOST state
     
-    if(mState==LOST){
-        recoverCounter++;
-        if(recoverCounter > 100){
-            recoverMode = true;
-        }
-    }else if (mState==OK)
-    {
-        if(recoverMode)
-        {
-            succ_counter++;
-            if(succ_counter>50)
-            {
-                succ_counter=0;
-                cout<<"Recover Successfully"<<endl;
-                float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
-                float curr_x = currPose.at<float>(0,3);
-                float curr_y = currPose.at<float>(1,3);
-                if(path_it_counter<planned_trajectory.size()){
-                    auto it=planned_trajectory.begin() + path_it_counter;
-                    for(it; it!=planned_trajectory.end();it++)
-                    {
-                        *it={curr_x,curr_y,curr_angle};
-                    }
-                }
-                if(path_it_counter > 0){
-                    curr_des = {curr_x,curr_y,curr_angle};
-                    mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
-                    mpMapDrawer->SetCurrentPath(planned_trajectory);
-                    mpMapDrawer->SetCurrentCounter(path_it_counter);
-                }
-                recover_success=true;
-                recoverCounter = 0;
-                recoverMode = false;
-            }
-        }
-    }
-    
+    // if(mState==LOST){
+    //     recoverCounter++;
+    //     if(recoverCounter > 100){
+    //         recoverMode = true;
+    //         //cout << "start recover mode" << endl;
+    //     }
+    // }else if (mState==OK)
+    // {
+    //     if(recoverMode)
+    //     {
+    //         succ_counter++;
+    //         if(succ_counter>50)
+    //         {
+    //             succ_counter=0;
+    //             cout<<"Recover Successfully"<<endl;
+    //             float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
+    //             float curr_x = currPose.at<float>(0,3);
+    //             float curr_y = currPose.at<float>(1,3);
+    //             if(path_it_counter<planned_trajectory.size()){
+    //                 auto it=planned_trajectory.begin() + path_it_counter;
+    //                 for(it; it!=planned_trajectory.end();it++)
+    //                 {
+    //                     *it={curr_x,curr_y,curr_angle};
+    //                 }
+    //             // planned_trajectory.erase(planned_trajectory.begin() + path_it_counter - 1, planned_trajectory.end());
+    //             }
+    //             if(path_it_counter > 0){
+    //                 //planned_trajectory.push_back({curr_x,curr_y,curr_angle});
+    //                 //path_it_counter =planned_trajectory.size()-1;
+    //                 curr_des = {curr_x,curr_y,curr_angle};
+
+    //                 mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+    //                 mpMapDrawer->SetCurrentPath(planned_trajectory);
+    //                 mpMapDrawer->SetCurrentCounter(path_it_counter);
+    //             }
+    //             recover_success=true;
+    //             recoverCounter = 0;
+    //             recoverMode = false;
+    //         }
+    //     }
+    // }
+
     return mCurrentFrame.mTcw.clone();
 }
 
@@ -423,6 +419,7 @@ void Tracking::Track()
                 if(!mbVO)
                 {
                     // In last frame we tracked enough MapPoints in the map
+                    //std::cout << "not in VO mode" << std::endl;
                     if(!mVelocity.empty())
                     {
                         bOK = TrackWithMotionModel();
@@ -1073,6 +1070,77 @@ bool Tracking::TrackLocalMap()
 	mlMapPoints.push_back(nObsvMappoints); //xinke
     mlTotalObservations.push_back(totalObservation); //xinke
 
+
+    /*
+    // check the camera model
+    map_data MD;    
+    double theta_interval;
+    //{
+        //unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+        vector<MapPoint*> vpPts = mpMap->GetAllMapPoints();
+        //cout << "totally " << vpPts.size() << " points." << endl;
+        for(size_t i=0; i<vpPts.size(); i++){
+            if(vpPts[i]->isBad())
+                continue;
+
+            cv::Mat Tsc_curr = mCurrentFrame.mTcw.clone().inv();    
+
+            float minDist = vpPts[i]->GetMinDistanceInvariance();
+            float maxDist = vpPts[i]->GetMaxDistanceInvariance();
+            float foundRatio = vpPts[i]->GetFoundRatio();
+
+            //float Dist = sqrt((Tsc_curr.at<float>(0,3) - vpPts[i]->GetWorldPos().at<float>(0))*(Tsc_curr.at<float>(0,3) - vpPts[i]->GetWorldPos().at<float>(0))+
+            //(Tsc_curr.at<float>(1,3) - vpPts[i]->GetWorldPos().at<float>(1))*(Tsc_curr.at<float>(1,3) - vpPts[i]->GetWorldPos().at<float>(2))+
+            //(Tsc_curr.at<float>(2,3) - vpPts[i]->GetWorldPos().at<float>(2))*(Tsc_curr.at<float>(2,3) - vpPts[i]->GetWorldPos().at<float>(2)));
+
+            //if((Dist > maxDist)||(Dist < minDist))
+            //    continue;
+            
+            MD.Map.push_back(std::vector<double>{vpPts[i]->GetWorldPos().at<float>(0),
+                                                        vpPts[i]->GetWorldPos().at<float>(1),
+                                                        vpPts[i]->GetWorldPos().at<float>(2)});
+
+            if(vpPts[i]->theta_std * 2.5 < 10.0/57.3){
+                theta_interval = 10.0/57.3;
+            }else{
+                theta_interval = vpPts[i]->theta_std * 2.5;
+            }
+
+            MD.UB.push_back(double(vpPts[i]->theta_mean + theta_interval));
+            MD.LB.push_back(double(vpPts[i]->theta_mean - theta_interval));
+            MD.maxDist.push_back(double(maxDist));
+            MD.minDist.push_back(double(minDist));
+            MD.foundRatio.push_back(double(foundRatio));
+        }
+    //}
+
+    
+
+    camera camera_model(MD,20);
+
+    
+    
+    
+    // compute the pose in the body frame
+    if(!mCurrentFrame.mTcw.empty()){
+        
+        
+        cv::Mat Tsc = mCurrentFrame.mTcw.clone().inv();
+        cv::Mat T_wb_mat = cv::Mat(T_ws_mat*Tsc*T_cb_mat);
+        
+        
+        cv::Mat Twb_cam = T_wb_initial_mat.inv()*T_wb_mat;
+        
+        
+        //visible_info VI;
+        int visible_pts;
+        visible_pts = camera_model.countVisible(Twb_cam);
+
+        cout << "number of points predicted = " << visible_pts << endl;
+    }
+    
+    */
+    
     // Decide if the tracking was succesful
     // More restrictive if there was a relocalization recently
     if(mCurrentFrame.mnId<mnLastRelocFrameId+mMaxFrames && mnMatchesInliers<30)
@@ -1699,16 +1767,17 @@ void Tracking::InformOnlyTracking(const bool &flag)
     mbOnlyTracking = flag;
 }
 
+bool Tracking::needPlanning(){
+    return(planned_trajectory.size()==0 || path_it_counter==planned_trajectory.size() -1);
+}
+
 bool Tracking::checkWayPoint()
 {
-    float x=currPose.at<float>(0,3);
-    float y=currPose.at<float>(1,3);
     if(path_it_counter<planned_trajectory.size()){
         if(curr_des.empty()){
             curr_des=planned_trajectory[path_it_counter];
         }
         
-
         if(path_it_counter<(planned_trajectory.size()-1))
         {
             vector<double> prev_des;
@@ -1723,10 +1792,10 @@ bool Tracking::checkWayPoint()
             if(d_des != 0){
                 dir_des.push_back((curr_des[0]-prev_des[0])/d_des);
                 dir_des.push_back((curr_des[1]-prev_des[1])/d_des);
-                d_cur = (x - prev_des[0])*dir_des[0] + (y - prev_des[1])*dir_des[1];
+                d_cur = (x_curr - prev_des[0])*dir_des[0] + (y_curr - prev_des[1])*dir_des[1];
             }
 
-            double d_des_curr=sqrt((curr_des[0]-x)*(curr_des[0]-x)+(curr_des[1]-y)*(curr_des[1]-y));
+            double d_des_curr=sqrt((curr_des[0]-x_curr)*(curr_des[0]-x_curr)+(curr_des[1]-y_curr)*(curr_des[1]-y_curr));
 
             if(d_des <= (d_cur+0.1))
             {
@@ -1735,83 +1804,81 @@ bool Tracking::checkWayPoint()
                 return true;
             }
         }
+
     }
     return false;
+}
 
+
+bool Tracking::needExploration(){
+
+    if(explorationFinish)
+        return false;
+
+    if(planned_trajectory.size() > 1){
+        
+        float end_des_x = planned_trajectory.back()[0];
+        float end_des_y = planned_trajectory.back()[1];
+        
+        float dist_expr = sqrt((x_curr - end_des_x)*(x_curr - end_des_x) + (y_curr - end_des_y)*(y_curr - end_des_y));          
+        if(dist_expr < 0.08)
+        {
+            return true;
+        }else{
+            return false;
+        }                   
+    }else{
+        return false;
+    }
+}
+
+bool Tracking::isGoalReached(float x_curr, float y_curr, float theta_curr){
+    
+        float dist_goal = sqrt((x_curr - x_goal)*(x_curr - x_goal) + (y_curr - y_goal)*(y_curr - y_goal));
+        float theta_diff_goal = theta_curr - theta_goal;
+        if(theta_diff_goal>M_PI)
+        {
+            theta_diff_goal=theta_diff_goal-2*M_PI;
+        }
+        else if(theta_diff_goal<-M_PI)
+        {
+            theta_diff_goal=theta_diff_goal+2*M_PI;
+        }     
+    
+        goalReached = (dist_goal < 0.15)&&(fabs(theta_diff_goal)<0.5);
+    
 }
 
 bool Tracking::computeExplorationMode(){
 
-        
     if(mCurrentFrame.mvpMapPoints.size() == 0)
-        return false;
+    return false;
 
-    featureCenter = 0;
     int featureCounter = 0;
 
     // compute the center of projected map points
     for(size_t i = 0; i < mCurrentFrame.mvpMapPoints.size(); i++){
         if(mCurrentFrame.mvpMapPoints[i]!=NULL){
-            featureCenter += mCurrentFrame.mvpMapPoints[i]->mTrackProjX;
             featureCounter++;
         }
     }
-
-    featureCenter = featureCenter/featureCounter;
-    float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
-    float curr_x = currPose.at<float>(0,3);
-    float curr_y = currPose.at<float>(1,3);
 
     // todo: if in the exploration mode, the goal position can be seen, then we just stop exploration and go!
     // check the distance between current position and the goal position
     // check the angle between current position and goal position
     // check the occlusion by raycasting
     // check if the angle is reachable
-    float goal_x = 5.03;
-    float goal_y = 1.69;
-    float goal_theta = -1.57;
+    // goalDetected = detectGoal();
 
-    
-    if((curr_x > 4.5)&&((fabs(goal_theta - curr_angle) < 0.5))){
-        goalDetectedCounter++;
-        if(goalDetectedCounter>100){
-        goalDetected = true;
-        explore = 0;
-        exploreStart = false;
-        exploreEnd = false;
-        explore_reverse = false;
-        exploreFinish = true;
-        exploreTrigger = false;
-        trajectoryUpdated = false; 
-        goalDetectedCounter=0;      
-       // path_it_counter++;
-        //planned_trajectory.pop_back();
-        planned_trajectory.back() = {curr_x, curr_y, curr_angle};
-        curr_des = {curr_x, curr_y, curr_angle};
-        //path_it_counter=planned_trajectory.size()-1;
-        return true;
-        }
-    }
-
-    // determine turn right or left, and when to stop
-    if(!exploreStart){
-        if(featureCenter > 480){
-            explore = 1;
-
-        }else{
-            explore = -1;
-        }
-        exploreStart = true;
-        explore_star_angle=curr_angle;
-        exploreEnd=false;
-        explore_reverse=false;
-        exploreFinish = false;
+    if(explorationStatus == 0){
         // compute the frontier angles
         frontierCentersDir.clear();
         float frontierAngleRelativeMax = 0;
         float frontierAngleRelativeMin = 0;
+        explore_star_angle = theta_curr;
+        // compute the max and min rotation angles
         for(size_t i = 0; i < frontierCenters.size(); i++){
-            float angle_frontierCenter = atan2f(frontierCenters[i][1] - curr_y, frontierCenters[i][0] - curr_x);
+            float angle_frontierCenter = atan2f(frontierCenters[i][1] - y_curr, frontierCenters[i][0] - x_curr);
             float angle_frontier_relative = angle_frontierCenter-explore_star_angle;
             if(angle_frontier_relative>M_PI)
             {
@@ -1824,30 +1891,27 @@ bool Tracking::computeExplorationMode(){
 
             std::vector<std::vector<double>> doubleOccupied(occupied.begin(), occupied.end());
             StateValidChecker svc(doubleOccupied);
-            if( !svc.checkMotionStraightLine({frontierCenters[i][0], frontierCenters[i][1]},{curr_x, curr_y}) ){
+            if( !svc.checkMotionStraightLine({frontierCenters[i][0], frontierCenters[i][1]},{x_curr, y_curr}) ){
                 cout << "occluded frontier: [ " << frontierCenters[i][0] << ", " << frontierCenters[i][1] << " ] " << endl;
                 continue;
             }
             
-         frontierCentersDir.push_back(angle_frontier_relative);
+            frontierCentersDir.push_back(angle_frontier_relative);
             if(angle_frontier_relative > frontierAngleRelativeMax)
                 frontierAngleRelativeMax = angle_frontier_relative + 15/57.3;
             if(angle_frontier_relative < frontierAngleRelativeMin)
                 frontierAngleRelativeMin = angle_frontier_relative - 15/57.3;
         }
 
-        if(explore == 1){
-            Bound1 = -frontierAngleRelativeMin;
-            Bound2 = frontierAngleRelativeMax;
-        }else if(explore == -1){
-            Bound1 = frontierAngleRelativeMax;
-            Bound2 = -frontierAngleRelativeMin;
-        }
+        // Bound1 is the bound to the left, Bound2 is the bound to the right
+        Bound1 = -frontierAngleRelativeMin;
+        Bound2 = frontierAngleRelativeMax;
+
+
 
     }
 
-
-    float angle_diff=curr_angle-explore_star_angle;
+    float angle_diff=theta_curr-explore_star_angle;
     if(angle_diff>M_PI)
     {
         angle_diff=angle_diff-2*M_PI;
@@ -1858,64 +1922,34 @@ bool Tracking::computeExplorationMode(){
     }
     angle_diff=fabs(angle_diff);
 
-
     explore_stop_diff = 5/57.3;
-    
-    // exploration toward the first point
-    if(!exploreEnd && !explore_reverse)
-    {
-        if( (featureCounter<100) || (angle_diff>Bound1) )
-        {
-            exploreEnd=true;
-            explore_reverse=false;
-            explore=-explore;
-        }
+
+    switch(explorationStatus){
+        case 0:
+            explorationStatus = -1;
+            break;
+        case -1:
+            if( featureCounter < 200 || angle_diff > Bound1 ){
+                explorationStatus = -2;
+            }
+            break;
+        case -2:
+            if( angle_diff < explore_stop_diff ){
+                explorationStatus = 1;
+            }
+            break;
+        case 1:
+            if( featureCounter < 200 || angle_diff > Bound2 ){
+                explorationStatus = 2;
+            }
+            break;
+        case 2:
+            if( angle_diff< explore_stop_diff ){
+                explorationStatus = 0;
+                explorationFinish = true;
+            }
     }
-    
-    // return back
-    if(exploreEnd && !explore_reverse)
-    {
-        if(angle_diff<explore_stop_diff)
-        {
-            exploreEnd=false;
-            explore_reverse=true;
-        }
-
-    }
-
-    // exploration toward the second point
-    if(!exploreEnd && explore_reverse)
-    {
-        if( (featureCounter<100) || (angle_diff>Bound2) )
-        {
-            exploreEnd=true;
-            explore=-explore;
-        }
-    }
-
-    // return back
-    if(exploreEnd && explore_reverse)
-    {
-        if(angle_diff<explore_stop_diff)
-        {
-            explore=0;
-            // state return
-            exploreStart = false;
-            exploreEnd = false;
-            explore_reverse = false;
-            exploreFinish = true;
-            exploreTrigger = false;
-            trajectoryUpdated = false;
-        }
-
-    }
- }
-
-
-
-
-    // return back to the middle 
-
+}
 
 bool Tracking::checkWayPointRecover(){
     // get rid of all the following way points
@@ -1930,9 +1964,7 @@ bool Tracking::checkWayPointRecover(){
         return false;
     }
 
-
     return true;
-
 }
 
 void Tracking::UpdateCollision(const std::vector<std::vector<float>> &bCollision)
@@ -1963,6 +1995,12 @@ void Tracking::UpdateFrontierCenter(const std::vector<std::vector<float>> &front
     this->mpMapDrawer->SetCurrentFrontierCenter(frontierCenter);  
     this->frontierCenters.clear();
     this->frontierCenters = frontierCenter; 
+}
+
+void Tracking::set_goal(float x, float y, float theta){
+    x_goal = x;
+    y_goal = y;
+    theta_goal = theta;
 }
 
 } //namespace ORB_SLAM

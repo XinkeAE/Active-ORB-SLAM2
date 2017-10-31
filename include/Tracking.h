@@ -145,6 +145,15 @@ public:
     // For planning compute the pose in the world frame
     cv::Mat T_wb_initial_mat;
     cv::Mat currPose;
+    // 2d coordinates
+    float x_curr = 0;
+    float y_curr = 0;
+    float theta_curr = 0;
+
+    float x_goal = 0.0;
+    float y_goal = 0;
+    float theta_goal = 0;
+    void set_goal(float x, float y, float theta);
 
     cv::Mat T_ws_mat = (cv::Mat_<float>(4,4) <<    0, 0, 1, 0.22, //0.22,//0.25,
                                                 -1, 0, 0, -0.1, // -0.1,//-0.1,
@@ -158,22 +167,25 @@ public:
     
     bool TwbInitialized = false;
     size_t TwbCounter = 0;
+
+    // Planning/Control related
     std::vector<std::vector<double>> planned_trajectory;
     std::vector<double> curr_des;
-    int path_it_counter=1;
-
+    int path_it_counter=0;
+    bool needPlanning();
     bool checkWayPoint();
 
-    // exploration mode 0: not in exploration mode; -1: explore left; 1: explore right
-    int explore = 0 ;
-    bool trajectoryUpdated = false;
-    bool exploreTrigger = false;
-    bool exploreStart = false;
-    bool exploreEnd = false;
-    bool exploreFinish = false;
-    bool explore_reverse=false;
+    // Exploration related
+    // exploration mode:
+    // 0: not in exploration mode
+    // -1: explore left
+    // -2: return to right
+    // 1: explore right
+    // 2: return to left
+    int explorationStatus = 0 ;
+    bool explorationFinish = true;
+    bool needExploration();
     bool computeExplorationMode();
-    float featureCenter = 480;
     float explore_star_angle;
     float explore_stop_diff;
     std::vector<std::vector<float>> frontierCenters;
@@ -185,6 +197,7 @@ public:
     size_t goalDetectedCounter = 0;
 
 
+    // recover
     bool recoverMode = false;
     bool recover_success=false;
     size_t succ_counter=0;
@@ -193,6 +206,8 @@ public:
     bool checkWayPointRecover();
 
     bool goalDetected = false;
+    bool goalReached = false;
+    bool isGoalReached(float x_curr, float y_curr, float theta_curr);
     
     
     

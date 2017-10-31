@@ -35,6 +35,7 @@
 /* Authors: Alejandro Perez, Sertac Karaman, Ryan Luna, Luis G. Torres, Ioan Sucan, Javier V Gomez, Jonathan Gammell */
 
 
+//#include "ompl/geometric/planners/rrt/RRTstar.h"
 #include "ompl/base/goals/GoalSampleableRegion.h"
 #include "ompl/tools/config/SelfConfig.h"
 #include "ompl/base/objectives/PathLengthOptimizationObjective.h"
@@ -266,6 +267,8 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
     {
         iterations_++;
 
+        //cout << bestCost_.value() << endl;
+
         // sample random state (with goal biasing)
         // Goal samples are only sampled until maxSampleCount() goals are in the tree, to prohibit duplicate goal states.
         if (goal_s && goalMotions_.size() < goal_s->maxSampleCount() && rng_.uniform01() < goalBias_ && goal_s->canSample()) {
@@ -304,6 +307,8 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
             motion->parent = nmotion;
             motion->incCost = opt_->motionCost(nmotion->state, motion->state);
             motion->cost = opt_->combineCosts(nmotion->cost, motion->incCost);
+
+            //cout << "cost stam: " << motion->cost << " " << motion->incCost << endl;
 
             // Find nearby neighbors of the new motion
             getNeighbors(motion, nbh);
@@ -1101,7 +1106,35 @@ void ompl::geometric::RRTstar::calculateRewiringLowerBounds()
 
 // For debugging
 void ompl::geometric::RRTstar::display_costs(vector<Motion*> mpath) {
+
 	Vector q(3);
+
+	/*double cost2go_cam = 0, cost2go_len = 0;
+	for (int i = mpath.size()-1 ; i >= 0; i--) {
+		cout << " ------- " << i << endl;
+		printStateVector(mpath[i]->state);
+		cout << mpath[i]->cost << " " << mpath[i]->incCost << endl;
+
+		if (i < mpath.size()-1) {
+			double c = MotionCost(mpath[i]->state, mpath[i+1]->state);
+			cout << "motion cost length: " << c << endl;
+			cost2go_len += c;
+
+			double costC = MotionCost(mpath[i+1]->state, mpath[i]->state, 2);
+			cout << "motion cost camera: " << costC << endl;
+			cost2go_cam += (double)costC;
+		}
+
+		retrieveStateVector(mpath[i]->state, q);
+		int nv = countVisible(q[0], q[1], q[2]);
+		double cost =  (double)nv;//(i==mpath.size()-1 || i==0) ? 0 : 1/(nv < 10 ? 1e-5 : (double)nv);
+		cout << "n_visible: " << nv << ", state cost: " << cost << ", opt_state_cost: " << opt_->stateCost(mpath[i]->state) << endl;
+		cost2go_cam += cost;
+	}
+
+	cout << "\nCost2go camera: " << cost2go_cam << endl;
+	cout << "Cost2go length: " << cost2go_len << endl << endl;*/
+
 	Vector st = getStartState();
 	int min_vis_heuristic = 1e9, min_vis = 1e9;
 	int i_min = -1, i_min_heuristic = -1;
@@ -1190,6 +1223,7 @@ ppMatrix ompl::geometric::RRTstar::save2file(vector<Motion*> mpath) {
                 M[k][2] = fix_rot_angle(M[k][2]);
 				for (int j = 0; j<M[k].size(); j++) {
                     myfile << M[k][j] << " ";
+                    //cout << M[k][j] << " ";
 				}
                 myfile << endl;
 				count++;

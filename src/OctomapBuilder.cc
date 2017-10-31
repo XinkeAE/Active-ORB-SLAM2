@@ -1,23 +1,31 @@
 #include "OctomapBuilder.h"
+#include <math.h> 
 
 namespace ORB_SLAM2 {
 
 OctomapBuilder::OctomapBuilder(){
     globalOctoMap = new octomap::OcTree(0.15f);
-    globalOctoMap->setOccupancyThres(0.5);
+    globalOctoMap->setOccupancyThres(0.7);
     //globalOctoMap->setProbMiss(0.51);
     hasUpdate = false;
+    /*
     camera_cx = 474.95;
     camera_cy = 264.26;
     camera_fx = 520.48;
-    camera_fy = 522.47;
+    camera_fy = 522.47;*/
 
-    cv::Mat T_cb_mat = (cv::Mat_<float>(4,4) <<     0, -1, 0, -0.1, //-0.1,
+    camera_fx = 554.2547;
+    camera_fy = 554.2547;
+    camera_cx = 320.5;
+    camera_cy = 240.5;   
+
+    cv::Mat T_cb_mat = (cv::Mat_<float>(4,4) <<     0, -1, 0, -0.1,
     0, 0, -1, 0,
-    1,0, 0, -0.22, //-0.22,
+    1,0, 0, -0.22,
     0, 0, 0, 1);
 
-    depthFactor = 1/1027.6;
+    //depthFactor = 1/1027.6; // real camera
+    depthFactor = 1;
 
     T_bc = T_cb_mat.inv();
 
@@ -50,13 +58,14 @@ void OctomapBuilder::Run() {
         for(int m=0; m<depth.rows; m++){
             for (int n=0; n<depth.cols; n++){
                 float d = depth.at<float>(m,n);
+                if(isnan(depth.at<float>(m,n))) d = 7;
                 if(d < 0.05) continue;
                 float z = d;
                 
                 float x = (float(n) - camera_cx) * z / camera_fx;
                 float y = (float(m) - camera_cy) * z / camera_fy;
-                if(z > 6.5) z = 6.5;
-                if( y > 0.2 || y < -0.25) continue;
+                //if(z > 8) z = 8;
+                if( y > 0.1 || y < -1) continue;
                 //y=0;
                 Eigen::Vector4f hPt;
                 hPt << x,y,z,1;

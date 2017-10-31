@@ -3,8 +3,6 @@
 
 **Authors: Active ORB SLAM 2** Xinke Deng, Zixu Zhang, Avishai Sintov, Jing Huang, and Timothy Bretl
 
-# Note: this Active ORB SLAM code is for demonstration purpose. We are working on cleaning the code base up.
-
 #1. Prerequisites
 We have tested the library in **14.04** with ROS indigo. A powerful computer (e.g. i7) will ensure real-time performance and provide more stable and accurate results.
 

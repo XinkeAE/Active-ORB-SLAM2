@@ -47,6 +47,9 @@ public:
 	// Get planning trajectory.
 	std::vector<std::vector<double>> GetPlanningTrajectory();
 
+	// Set goal pose
+	void set_goal(float x, float y, float theta);
+
 	// Set floor map
 	void setFloorMap(vector<vector<float>> floorMap_);
 

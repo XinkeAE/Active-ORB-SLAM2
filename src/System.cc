@@ -261,6 +261,19 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     }
     }
 
+    if(!goal_set){
+        x_goal = 4.0;
+        
+        y_goal = 0.0;
+        theta_goal = 0.0;
+        
+        mpTracker->set_goal(x_goal, y_goal, theta_goal);
+        mpPlanner->set_goal(x_goal, y_goal, theta_goal);
+
+        goal_set = true;
+        
+    }
+
     cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,timestamp);
 
     // Request planning
@@ -269,154 +282,11 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     if (!currPose.empty()){
         x_curr = currPose.at<float>(0,3);
         y_curr = currPose.at<float>(1,3);
-        //Eigen::Matrix4f T_wb_eig=Converter::toMatrix4f(currPose);
-        float curr_angle = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
-  
-
-        float dist = sqrt((x_curr - x_end)*(x_curr - x_end) + (y_curr - y_end)*(y_curr - y_end));
-
-        float goal_x = 5.03;
-        float goal_y = 1.69;
-        float goal_theta = -1.57;
+        theta_curr = atan2(currPose.at<float>(1,0), currPose.at<float>(0,0));
         
-        float dist_goal = sqrt((x_curr - goal_x)*(x_curr - goal_x) + (y_curr - goal_y)*(y_curr - goal_y));
-        float theta_diff_goal = curr_angle - goal_theta;
-        if(theta_diff_goal>M_PI)
-        {
-            theta_diff_goal=theta_diff_goal-2*M_PI;
-        }
-        else if(theta_diff_goal<-M_PI)
-        {
-            theta_diff_goal=theta_diff_goal+2*M_PI;
-        }        
-
-        bool goal_reached = (dist_goal < 0.15)&&(fabs(theta_diff_goal)<0.5);
-
-        std::vector<std::vector<double>> planned_trajectory;
-
-        std::vector<std::vector<float>> floorMap;
-        std::vector<std::vector<float>> frontierMap;
-        bool isApproxSoln = true;
-
-        // TODO: Change the arguments.
-        // At the beginning we plan, once the robot approach the end of trajectory list, replan
-        if(octomapInitialize){
-            if(!mpTracker->goalDetected && !mpTracker->recover_success){
-                if((!planStarted || ((!planRequestSent)&&(mpTracker->explore==0 && mpTracker->exploreFinish)))&&(!goal_reached)){//(dist<0.2&&(!planRequestSent)&&(mpTracker->explore==0&& mpTracker->exploreEnd)))){// && (mpTracker->explore==0&&mpTracker->exploreEnd) ){
-                    
-                    // get the floor map in planning
-                    floorMap.clear();
-                    frontierMap.clear();
-                    floorMap = mpOctomapBuilder->getOccupiedPoints();
-
-                    frontierMap = mpOctomapBuilder->getFrontier();
-
-                    if(planStarted)
-                        floorMap.insert(floorMap.end(), frontierMap.begin(), frontierMap.end());
-                    else{
-                        floorMap.push_back({-0.5, -0.3});
-                        floorMap.push_back({-0.5, -0.2});
-                        floorMap.push_back({-0.5, -0.1});
-                        floorMap.push_back({-0.5, 0.0});
-                        floorMap.push_back({-0.5, 0.1});
-                        floorMap.push_back({-0.5, 0.2});
-                        floorMap.push_back({-0.5, 0.3});
-                        floorMap.push_back({-0.5, 0.4});
-                        floorMap.push_back({-0.5, 0.6});
-                        floorMap.push_back({-0.5, 0.7});
-                        floorMap.push_back({-0.5, 0.8});
-                        floorMap.push_back({-0.5, 0.9});
-                        floorMap.push_back({-0.5, 1.2});
-                        floorMap.push_back({-0.5, 1.4});
-                        //floorMap.push_back({-0.5, 1.6});
-                        //floorMap.push_back({-0.5, 1.8});
-                        floorMap.push_back({-0.4, -0.5});
-                        floorMap.push_back({-0.3, -0.5});
-                        floorMap.push_back({-0.2, -0.5});
-                        floorMap.push_back({-0.1, -0.5});
-                        floorMap.push_back({-0.0, -0.5});
-                        floorMap.push_back({0.1, -0.5});
-                        floorMap.push_back({0.2, -0.5});
-                        floorMap.push_back({-0.4, 1.4});
-                        floorMap.push_back({-0.3, 1.4});
-                        floorMap.push_back({-0.2, 1.4});
-                        floorMap.push_back({-0.1, 1.4});
-                        floorMap.push_back({-0.0, 1.4});
-                        floorMap.push_back({0.1, 1.4});
-                        floorMap.push_back({0.2, 1.4});
-
-                    }
-
-                    mpPlanner->setFloorMap( floorMap );
-
-                    isApproxSoln = mpPlanner->approxSolution;
-
-                    if(isApproxSoln)
-                        mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
-
-                    planRequestSent = true; 
-                    planStarted = true;
-                }
-
-                planned_trajectory = mpPlanner->GetPlanningTrajectory();
-
-            }else{
-
-                if(!planRequestSent&&(!goal_reached)&& ( (mpTracker->explore==0 && (mpTracker->exploreFinish) ) || mpTracker->recover_success ) ){
-
-                    // get the floor map in planning
-                    floorMap.clear();
-                    frontierMap.clear();
-                    floorMap = mpOctomapBuilder->getOccupiedPoints();
-                    frontierMap = mpOctomapBuilder->getFrontier();
-
-                    floorMap.insert(floorMap.end(), frontierMap.begin(), frontierMap.end());
-
-                    mpPlanner->setFloorMap( floorMap );
-
-                    isApproxSoln = mpPlanner->approxSolution;
-                    
-                    if(isApproxSoln)
-                        mpPlanner->SendPlanningRequest(currPose, nullptr);
-
-                    planRequestSent = true; 
-                
-                    
-                }
-                planned_trajectory = mpPlanner->GetPlanningTrajectory();          
-            }
-        }
-
-
-   
-        // If update the trajectory then we reset the plan request flag
-        if (!planned_trajectory.empty() && (mpTracker->planned_trajectory.size()!=planned_trajectory.size()) &&  mpPlanner->planningFinish ) {
-
-            size_t counter = mpTracker->planned_trajectory.size();
-
-            x_end = planned_trajectory.back()[0];
-            y_end = planned_trajectory.back()[1];
-            //mpTracker->planned_trajectory = planned_trajectory;
-            for (size_t planCopyIter = mpTracker->planned_trajectory.size(); planCopyIter < (planned_trajectory.size()); planCopyIter++ ){
-                std::vector<double> wayPoint = planned_trajectory[planCopyIter];
-                mpTracker->planned_trajectory.push_back(wayPoint);
-            }
-
-            cout << "*********************** In System.cc *********************" << endl;
-            cout << "copied planned trajectory size = " << mpTracker->planned_trajectory.size() - counter << endl;
-            cout << "copied planned trajectory first = [ " << mpTracker->planned_trajectory[counter][0] << ", " << mpTracker->planned_trajectory[counter][1] << ", " << mpTracker->planned_trajectory[counter][2] << "] " << endl;
-            cout << "copied planned trajectory end = [ " << mpTracker->planned_trajectory[mpTracker->planned_trajectory.size()-1][0] << ", " << mpTracker->planned_trajectory[mpTracker->planned_trajectory.size()-1][1] << ", " << mpTracker->planned_trajectory[mpTracker->planned_trajectory.size()-1][2] << "] " << endl;            
-            cout << "*********************** End System.cc *********************" << endl;
-
-            mpTracker->exploreFinish = false;
-            mpTracker->goalDetected=false;
-            mpTracker->recover_success=false;
-            mpTracker->trajectoryUpdated = true;                         
-            planRequestSent = false;
-        }
-        
-        // If is keyframe, update the octomap
+        // update octomap
         if (mpTracker->mbKeyframe || !octomapInitialize) {
+
             mpOctomapBuilder->UpdateOctomap(depthmap, currPose);
             if(mpOctomapBuilder->calcOccupiedPoints()){
                 vector<vector<float>> occupiedPoints = mpOctomapBuilder->getOccupiedPoints();
@@ -437,6 +307,50 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
             }
            
         }
+
+        
+        // octomap variables
+        std::vector<std::vector<float>> floorMap;
+        std::vector<std::vector<float>> frontierMap;
+        std::vector<std::vector<double>> planned_trajectory;
+
+        // call planning
+        if (octomapInitialize && !mpTracker->goalReached){
+
+            // call the planning
+            if(mpTracker->needPlanning()){
+                
+                // get the floor map and frontier map 
+                // TodoXinke: add the empty space  
+                frontierMap.clear();
+                floorMap.clear();
+                frontierMap = mpOctomapBuilder->getFrontier();
+                floorMap = mpOctomapBuilder->getOccupiedPoints();
+
+                mpPlanner->setFloorMap( floorMap );
+                
+                if(mpPlanner->approxSolution){
+                    mpPlanner->SendPlanningRequest(cv::Mat(), nullptr);
+                    planRequestSent = true;
+                }
+
+            }
+
+
+            // update the planned trajectory            
+            if(mpTracker->planned_trajectory.size() != mpPlanner->GetPlanningTrajectory().size()){
+                // copy the planned trajectory out
+                planned_trajectory = mpPlanner->GetPlanningTrajectory();
+                for (size_t planCopyIter = mpTracker->planned_trajectory.size(); planCopyIter < (planned_trajectory.size()); planCopyIter++ ){
+                    std::vector<double> wayPoint = planned_trajectory[planCopyIter];
+                    mpTracker->planned_trajectory.push_back(wayPoint);
+                }
+                planRequestSent = false;
+                mpTracker->explorationFinish = false; // reset the exploration flag
+            }
+
+        }
+
     }
 
     unique_lock<mutex> lock2(mMutexState);
@@ -584,6 +498,12 @@ bool System::LoadMapCameraPara(const string& filename) {
 void System::SaveTrajectoryTUM(const string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
+    /*if(mSensor==MONOCULAR)
+    {
+        cerr << "ERROR: SaveTrajectoryTUM cannot be used for monocular." << endl;
+        return;
+    }*/
+
     vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
@@ -730,9 +650,13 @@ void System::SaveKeyFrameTrajectoryTUM_fe(const string &filename)
         if(pKF->isBad())
             continue;
 
+        cout << "pass0!" << endl;
         cv::Mat R = pKF->GetFirstEstRotation().t();
+        cout << "pass1!" << endl;
         vector<float> q = Converter::toQuaternion(R);
+        cout << "pass2!" << endl;
         cv::Mat t = pKF->GetFirstEstCameraCenter();
+        cout << "pass!" << endl;
 
         cv::Mat R_p = pKF->GetFirstEstRotation_parent().t();
         vector<float> q_p = Converter::toQuaternion(R_p);
@@ -771,6 +695,8 @@ void System::SaveMapPoints(const string &filename)
         cv::Mat Normal = pPt->GetNormal();
         int number_observed = pPt->Observations();
 
+        //KeyFrame* pKF = pPt->GetReferenceKeyFrame();
+
         std::vector<float> view_cos_vector;
         float view_mean;
         float view_std;
@@ -783,6 +709,7 @@ void System::SaveMapPoints(const string &filename)
         {
             cv::Mat normali = pPt->mNormalVectors[j];
             view_cos_vector.push_back(normali.dot(Normal));   
+            //std::cout << j << " view cosine = " <<  normali.dot(Normal) << std::endl; 
 
             float theta = atan2(normali.at<float>(0,0),normali.at<float>(2,0));
             theta_s.push_back(theta);
@@ -844,6 +771,7 @@ void System::SaveTrajectoryKITTI(const string &filename)
 
         while(pKF->isBad())
         {
+          //  cout << "bad parent" << endl;
             Trw = Trw*pKF->mTcp;
             pKF = pKF->GetParent();
         }
@@ -890,7 +818,7 @@ bool System::getRecoverMode(){
 }
 
 int System::getExplorationStatus(){
-    return mpTracker->explore;
+    return mpTracker->explorationStatus;
 }
 
 } //namespace ORB_SLAM
