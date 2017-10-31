@@ -52,8 +52,7 @@ chmod +x build_ros.sh
 ```
 
 #4. Specify the goal pose in planning.cc and system.cc
-changing line 32 in planning.cc
-changing line 278 - 280 in system.cc
+changing line 265 - 268 in system.cc
 
 #5. Run ros driver by running the script
 ```
