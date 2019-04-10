@@ -28,7 +28,7 @@ ROS indigo is required [ros](http://wiki.ros.org/indigo/Installation/Ubuntu).
 OctoMap is required [octomap](https://github.com/OctoMap/octomap)
 
 ## OMPL is required
-OMPL is required [OMPL](http://ompl.kavrakilab.org/download.html)
+OMPL is required [OMPL](http://ompl.kavrakilab.org/download.html). It is works on OMPL 1.7.2.
 
 #2. Building Active-ORB-SLAM2 library
 
