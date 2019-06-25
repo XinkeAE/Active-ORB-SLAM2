@@ -1,7 +1,7 @@
 # Active-ORB-SLAM2
 **Authors: ORB SLAM 2** [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2))
 
-**Authors: Active ORB SLAM 2** Xinke Deng, Zixu Zhang, Avishai Sintov, Jing Huang, and Timothy Bretl
+**Authors: [Active ORB SLAM 2](https://ieeexplore.ieee.org/document/8460721)** Xinke Deng, Zixu Zhang, Avishai Sintov, Jing Huang, and Timothy Bretl
 
 #1. Prerequisites
 We have tested the library in **14.04** with ROS indigo. A powerful computer (e.g. i7) will ensure real-time performance and provide more stable and accurate results.
@@ -59,4 +59,19 @@ changing line 265 - 268 in system.cc
 ./kinect.sh
 ```
 
+## Citation
+
+```
+@INPROCEEDINGS{Deng2018, 
+author={X. {Deng} and Z. {Zhang} and A. {Sintov} and J. {Huang} and T. {Bretl}}, 
+booktitle={2018 IEEE International Conference on Robotics and Automation (ICRA)}, 
+title={Feature-constrained Active Visual SLAM for Mobile Robot Navigation}, 
+year={2018}, 
+volume={}, 
+number={}, 
+pages={7233-7238}, 
+doi={10.1109/ICRA.2018.8460721}, 
+ISSN={2577-087X}, 
+month={May},}
+```
 
